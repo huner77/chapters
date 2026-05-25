@@ -8,90 +8,93 @@
 \newlabel{chap:high_fidelity_reconstruction}{{4}{56}{基于隐式神经场的高保真化学资产重建}{chapter.4}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {4.1}引言}{56}{section.4.1}\protected@file@percent }
 \@writefile{etoc}{\contentsline {section} {\numberline {\sffamily  4.1}Introduction} {56}{section.4.1}}
-\citation{cover1967nearest}
-\@writefile{lof}{\contentsline {figure}{\numberline {4.1}{\ignorespaces 基于 NeuS 的高保真化学资产重建流程图。包含数据预处理、网络训练、网格提取和纹理贴图生成四个模块。}}{57}{figure.caption.30}\protected@file@percent }
-\newlabel{fig:neus_pipeline}{{4.1}{57}{基于 NeuS 的高保真化学资产重建流程图。包含数据预处理、网络训练、网格提取和纹理贴图生成四个模块。}{figure.caption.30}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.1}{\ignorespaces 面向三维重建的化学实验物体分类体系。}}{57}{figure.caption.30}\protected@file@percent }
+\newlabel{fig:chemical_object_taxonomy}{{4.1}{57}{面向三维重建的化学实验物体分类体系。}{figure.caption.30}{}}
+\citation{wang2021neus}
+\citation{schonberger2016sfm}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.2}{\ignorespaces 基于 NeuS 的高保真化学资产重建流程图。包含数据预处理、网络训练、网格提取和纹理贴图生成四个模块。}}{59}{figure.caption.31}\protected@file@percent }
+\newlabel{fig:neus_pipeline}{{4.2}{59}{基于 NeuS 的高保真化学资产重建流程图。包含数据预处理、网络训练、网格提取和纹理贴图生成四个模块。}{figure.caption.31}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.2}算法设计与实现}{59}{section.4.2}\protected@file@percent }
+\@writefile{etoc}{\contentsline {section} {\numberline {\sffamily  4.2}Algorithm Design and Implementation} {59}{section.4.2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.1}数据预处理}{59}{subsection.4.2.1}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {4.2.1}Data Preprocessing}{59}{subsection.4.2.1}\protected@file@percent }
 \citation{schonberger2016sfm}
 \citation{kirillov2023segany}
-\@writefile{toc}{\contentsline {section}{\numberline {4.2}算法设计与实现}{58}{section.4.2}\protected@file@percent }
-\@writefile{etoc}{\contentsline {section} {\numberline {\sffamily  4.2}Algorithm Design and Implementation} {58}{section.4.2}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.1}数据预处理}{58}{subsection.4.2.1}\protected@file@percent }
-\@writefile{etoc}{\contentsline {subsection}{\numberline {4.2.1}Data Preprocessing}{58}{subsection.4.2.1}\protected@file@percent }
 \citation{ichnowski2022dexnerf}
-\@writefile{lof}{\contentsline {figure}{\numberline {4.2}{\ignorespaces 基于主体Mask的去噪框架图。COLMAP 生成的原始稀疏点云，包含大量环境噪声。利用重投影到主体Mask中剔除噪声，恢复出干净的点云。}}{59}{figure.caption.31}\protected@file@percent }
-\newlabel{fig:neus_noise}{{4.2}{59}{基于主体Mask的去噪框架图。COLMAP 生成的原始稀疏点云，包含大量环境噪声。利用重投影到主体Mask中剔除噪声，恢复出干净的点云。}{figure.caption.31}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.2}面向透明物体的几何表面提取}{59}{subsection.4.2.2}\protected@file@percent }
-\@writefile{etoc}{\contentsline {subsection}{\numberline {4.2.2}Geometry Surface Extraction for Transparent Objects}{59}{subsection.4.2.2}\protected@file@percent }
-\newlabel{sec:ch4_transparent_object}{{4.2.2}{59}{面向透明物体的几何表面提取}{subsection.4.2.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.2}面向透明物体的几何表面提取}{60}{subsection.4.2.2}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {4.2.2}Geometry Surface Extraction for Transparent Objects}{60}{subsection.4.2.2}\protected@file@percent }
+\newlabel{sec:ch4_transparent_object}{{4.2.2}{60}{面向透明物体的几何表面提取}{subsection.4.2.2}{}}
 \citation{zhang2024alphaneus}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.3}{\ignorespaces 基于主体Mask的去噪框架图。COLMAP 生成的原始稀疏点云，包含大量环境噪声。利用重投影到主体Mask中剔除噪声，恢复出干净的点云。}}{61}{figure.caption.32}\protected@file@percent }
+\newlabel{fig:neus_noise}{{4.3}{61}{基于主体Mask的去噪框架图。COLMAP 生成的原始稀疏点云，包含大量环境噪声。利用重投影到主体Mask中剔除噪声，恢复出干净的点云。}{figure.caption.32}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {4}{\ignorespaces Surface Extraction for Transparent Objects}}{62}{algorithm.4}\protected@file@percent }
+\newlabel{algo:transparent_surface_extraction}{{4}{62}{Surface Extraction for Transparent Objects}{algorithm.4}{}}
 \citation{Hou2023DCUDF}
-\@writefile{loa}{\contentsline {algorithm}{\numberline {4}{\ignorespaces Surface Extraction for Transparent Objects}}{61}{algorithm.4}\protected@file@percent }
-\newlabel{algo:transparent_surface_extraction}{{4}{61}{Surface Extraction for Transparent Objects}{algorithm.4}{}}
-\newlabel{eq:ch4_coarse_projection}{{4-3}{61}{面向透明物体的几何表面提取}{equation.4.3}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4.3}{\ignorespaces 小物体示意图。小物体仅覆盖图像中的极小一部分区域，导致有效监督信号较为稀疏。}}{62}{figure.caption.32}\protected@file@percent }
-\newlabel{fig:small_object_pixels}{{4.3}{62}{小物体示意图。小物体仅覆盖图像中的极小一部分区域，导致有效监督信号较为稀疏。}{figure.caption.32}{}}
-\newlabel{eq:ch4_refine_projection}{{4-4}{62}{面向透明物体的几何表面提取}{equation.4.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.3}基于学习态增强的小物体重建加速策略}{62}{subsection.4.2.3}\protected@file@percent }
-\@writefile{etoc}{\contentsline {subsection}{\numberline {4.2.3}Strategy for Ac celerating Small Object Reconstruction}{62}{subsection.4.2.3}\protected@file@percent }
-\newlabel{sec:adaptive_gradient}{{4.2.3}{62}{基于学习态增强的小物体重建加速策略}{subsection.4.2.3}{}}
+\newlabel{eq:ch4_coarse_projection}{{4-3}{63}{面向透明物体的几何表面提取}{equation.4.3}{}}
+\newlabel{eq:ch4_refine_projection}{{4-4}{63}{面向透明物体的几何表面提取}{equation.4.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.3}基于学习态增强的小物体重建加速策略}{63}{subsection.4.2.3}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {4.2.3}Strategy for Ac celerating Small Object Reconstruction}{63}{subsection.4.2.3}\protected@file@percent }
+\newlabel{sec:adaptive_gradient}{{4.2.3}{63}{基于学习态增强的小物体重建加速策略}{subsection.4.2.3}{}}
 \citation{wang2021neus}
-\@writefile{lof}{\contentsline {figure}{\numberline {4.4}{\ignorespaces NeuS 训练过程中的几何演化图。训练通常遵循从初始单位球（初始态）到粗略几何（过渡态），再到精细表面刻画（学习态）的演化路径。}}{63}{figure.caption.33}\protected@file@percent }
-\newlabel{fig:neus_three_stage}{{4.4}{63}{NeuS 训练过程中的几何演化图。训练通常遵循从初始单位球（初始态）到粗略几何（过渡态），再到精细表面刻画（学习态）的演化路径。}{figure.caption.33}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.4}{\ignorespaces 小物体示意图。小物体仅覆盖图像中的极小一部分区域，导致有效监督信号较为稀疏。}}{64}{figure.caption.33}\protected@file@percent }
+\newlabel{fig:small_object_pixels}{{4.4}{64}{小物体示意图。小物体仅覆盖图像中的极小一部分区域，导致有效监督信号较为稀疏。}{figure.caption.33}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.5}{\ignorespaces NeuS 训练过程中的几何演化图。训练通常遵循从初始单位球（初始态）到粗略几何（过渡态），再到精细表面刻画（学习态）的演化路径。}}{64}{figure.caption.34}\protected@file@percent }
+\newlabel{fig:neus_three_stage}{{4.5}{64}{NeuS 训练过程中的几何演化图。训练通常遵循从初始单位球（初始态）到粗略几何（过渡态），再到精细表面刻画（学习态）的演化路径。}{figure.caption.34}{}}
 \citation{kolve2017ai2thor,savva2019habitat,shen2021igibson,gu2023maniskill2,li2024chemistry3d,li2025labutopia}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.4}基于 NeuS 的高分辨率纹理资产生成算法}{64}{subsection.4.2.4}\protected@file@percent }
-\@writefile{etoc}{\contentsline {subsection}{\numberline {4.2.4}High-Resolution Texture Asset Generation Algorithm Based on NeuS}{64}{subsection.4.2.4}\protected@file@percent }
 \citation{loop1987smooth}
-\@writefile{lof}{\contentsline {figure}{\numberline {4.5}{\ignorespaces 纹理贴图生成流程图。主要包含网格提取、网格颜色查询、UV 坐标生成、光栅化烘焙以及纹理后处理修复五个阶段。}}{65}{figure.caption.34}\protected@file@percent }
-\newlabel{fig:xatlas_stage_pk}{{4.5}{65}{纹理贴图生成流程图。主要包含网格提取、网格颜色查询、UV 坐标生成、光栅化烘焙以及纹理后处理修复五个阶段。}{figure.caption.34}{}}
-\@writefile{loa}{\contentsline {algorithm}{\numberline {5}{\ignorespaces High-Resolution Texture Asset Generation Based on NeuS}}{65}{algorithm.5}\protected@file@percent }
-\newlabel{algo:neus_texture_generation_en}{{5}{65}{High-Resolution Texture Asset Generation Based on NeuS}{algorithm.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.4}基于 NeuS 的高分辨率纹理资产生成算法}{66}{subsection.4.2.4}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {4.2.4}High-Resolution Texture Asset Generation Algorithm Based on NeuS}{66}{subsection.4.2.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.6}{\ignorespaces 纹理贴图生成流程图。主要包含网格提取、网格颜色查询、UV 坐标生成、光栅化烘焙以及纹理后处理修复五个阶段。}}{66}{figure.caption.35}\protected@file@percent }
+\newlabel{fig:xatlas_stage_pk}{{4.6}{66}{纹理贴图生成流程图。主要包含网格提取、网格颜色查询、UV 坐标生成、光栅化烘焙以及纹理后处理修复五个阶段。}{figure.caption.35}{}}
 \citation{young_xatlas}
-\@writefile{lof}{\contentsline {figure}{\numberline {4.6}{\ignorespaces UV 坐标生成核心流程。}}{66}{figure.caption.35}\protected@file@percent }
-\newlabel{fig:xatlas_uv}{{4.6}{66}{UV 坐标生成核心流程。}{figure.caption.35}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {5}{\ignorespaces High-Resolution Texture Asset Generation Based on NeuS}}{67}{algorithm.5}\protected@file@percent }
+\newlabel{algo:neus_texture_generation_en}{{5}{67}{High-Resolution Texture Asset Generation Based on NeuS}{algorithm.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.7}{\ignorespaces UV 坐标生成核心流程。}}{68}{figure.caption.36}\protected@file@percent }
+\newlabel{fig:xatlas_uv}{{4.7}{68}{UV 坐标生成核心流程。}{figure.caption.36}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.8}{\ignorespaces 纹理贴图生成核心流程。}}{68}{figure.caption.37}\protected@file@percent }
+\newlabel{fig:xatlas_png}{{4.8}{68}{纹理贴图生成核心流程。}{figure.caption.37}{}}
 \citation{ichnowski2022dexnerf}
 \citation{mildenhall2020nerf}
 \citation{jittor2023implicit3dchallenge}
 \citation{cadcg2023reconchallenge}
 \citation{cignoni2008meshlab}
-\@writefile{lof}{\contentsline {figure}{\numberline {4.7}{\ignorespaces 纹理贴图生成核心流程。}}{67}{figure.caption.36}\protected@file@percent }
-\newlabel{fig:xatlas_png}{{4.7}{67}{纹理贴图生成核心流程。}{figure.caption.36}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.3}实验结果与分析}{67}{section.4.3}\protected@file@percent }
-\@writefile{etoc}{\contentsline {section} {\numberline {\sffamily  4.3}Experimental Results and Analysis} {67}{section.4.3}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.1}实验设置}{67}{subsection.4.3.1}\protected@file@percent }
-\@writefile{etoc}{\contentsline {subsection}{\numberline {4.3.1}Experimental Setup}{67}{subsection.4.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.2}透明物体实验分析}{68}{subsection.4.3.2}\protected@file@percent }
-\@writefile{etoc}{\contentsline {subsection}{\numberline {4.3.2}Reconstruction Results and Analysis on Transparent Objects}{68}{subsection.4.3.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {4.8}{\ignorespaces 透明物体几何提取可视化结果对比。第一列为输入 RGB 图像，第二列为 NeuS 的重建结果，第三列为本章算法的重建结果，第四列为对本章算法手动去除外表面后的内部结构可视化结果。图中黑色的片段是自动法线计算过程中部分法向发生翻转所致，并非几何提取错误。}}{69}{figure.caption.37}\protected@file@percent }
-\newlabel{fig:neus_transparent_pk}{{4.8}{69}{透明物体几何提取可视化结果对比。第一列为输入 RGB 图像，第二列为 NeuS 的重建结果，第三列为本章算法的重建结果，第四列为对本章算法手动去除外表面后的内部结构可视化结果。图中黑色的片段是自动法线计算过程中部分法向发生翻转所致，并非几何提取错误。}{figure.caption.37}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.1}{\ignorespaces 透明物体重建的 Chamfer Distance$\downarrow $对比（单位：mm）}}{70}{table.caption.38}\protected@file@percent }
-\newlabel{tab:transparent_cd_compare}{{4.1}{70}{透明物体重建的 Chamfer Distance$\downarrow $对比（单位：mm）}{table.caption.38}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.3}小物体重建实验分析}{70}{subsection.4.3.3}\protected@file@percent }
-\@writefile{etoc}{\contentsline {subsection}{\numberline {4.3.3}Reconstruction Results and Convergence Analysis on Small Objects}{70}{subsection.4.3.3}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {4.9}{\ignorespaces 小物体重建阶段结果可视化对比。}}{70}{figure.caption.39}\protected@file@percent }
-\newlabel{fig:neus_small_object_pk}{{4.9}{70}{小物体重建阶段结果可视化对比。}{figure.caption.39}{}}
-\newlabel{fig:psnr_curve_sub}{{4.10a}{71}{PSNR}{figure.caption.40}{}}
-\newlabel{sub@fig:psnr_curve_sub}{{a}{71}{PSNR}{figure.caption.40}{}}
-\newlabel{fig:ssim_curve_sub}{{4.10b}{71}{SSIM}{figure.caption.40}{}}
-\newlabel{sub@fig:ssim_curve_sub}{{b}{71}{SSIM}{figure.caption.40}{}}
-\newlabel{fig:lpips_curve_sub}{{4.10c}{71}{LPIPS}{figure.caption.40}{}}
-\newlabel{sub@fig:lpips_curve_sub}{{c}{71}{LPIPS}{figure.caption.40}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4.10}{\ignorespaces 小物体重建过程中PSNR、SSIM 和 LPIPS 随训练迭代步数的变化曲线对比。}}{71}{figure.caption.40}\protected@file@percent }
-\newlabel{fig:small_object_convergence_curves}{{4.10}{71}{小物体重建过程中PSNR、SSIM 和 LPIPS 随训练迭代步数的变化曲线对比。}{figure.caption.40}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.4}三维资产重建实验分析}{71}{subsection.4.3.4}\protected@file@percent }
-\@writefile{etoc}{\contentsline {subsection}{\numberline {4.3.4}3D Asset Reconstruction Results and Analysis}{71}{subsection.4.3.4}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {4.11}{\ignorespaces 本章算法生成的三维资产示例。从左到右依次为输入图像、重建得到的三维资产、对应几何模型和纹理贴图。}}{72}{figure.caption.41}\protected@file@percent }
-\newlabel{fig:texture_example}{{4.11}{72}{本章算法生成的三维资产示例。从左到右依次为输入图像、重建得到的三维资产、对应几何模型和纹理贴图。}{figure.caption.41}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4.12}{\ignorespaces MeshLab 与本章算法生成的纹理贴图对比。}}{73}{figure.caption.42}\protected@file@percent }
-\newlabel{fig:meshlab_compare}{{4.12}{73}{MeshLab 与本章算法生成的纹理贴图对比。}{figure.caption.42}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.5}局限性分析}{73}{subsection.4.3.5}\protected@file@percent }
-\@writefile{etoc}{\contentsline {subsection}{\numberline {4.3.5}Limitations Analysis}{73}{subsection.4.3.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.3}实验结果与分析}{69}{section.4.3}\protected@file@percent }
+\@writefile{etoc}{\contentsline {section} {\numberline {\sffamily  4.3}Experimental Results and Analysis} {69}{section.4.3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.1}实验设置}{69}{subsection.4.3.1}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {4.3.1}Experimental Setup}{69}{subsection.4.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.2}透明物体实验分析}{69}{subsection.4.3.2}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {4.3.2}Reconstruction Results and Analysis on Transparent Objects}{69}{subsection.4.3.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.9}{\ignorespaces 透明物体几何提取可视化结果对比。第一列为输入 RGB 图像，第二列为 NeuS 的重建结果，第三列为本章算法的重建结果，第四列为对本章算法手动去除外表面后的内部结构可视化结果。图中黑色的片段是自动法线计算过程中部分法向发生翻转所致，并非几何提取错误。}}{70}{figure.caption.38}\protected@file@percent }
+\newlabel{fig:neus_transparent_pk}{{4.9}{70}{透明物体几何提取可视化结果对比。第一列为输入 RGB 图像，第二列为 NeuS 的重建结果，第三列为本章算法的重建结果，第四列为对本章算法手动去除外表面后的内部结构可视化结果。图中黑色的片段是自动法线计算过程中部分法向发生翻转所致，并非几何提取错误。}{figure.caption.38}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.1}{\ignorespaces 透明物体重建的 Chamfer Distance$\downarrow $对比（单位：mm）}}{71}{table.caption.39}\protected@file@percent }
+\newlabel{tab:transparent_cd_compare}{{4.1}{71}{透明物体重建的 Chamfer Distance$\downarrow $对比（单位：mm）}{table.caption.39}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.3}小物体重建实验分析}{71}{subsection.4.3.3}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {4.3.3}Reconstruction Results and Convergence Analysis on Small Objects}{71}{subsection.4.3.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.10}{\ignorespaces 小物体重建阶段结果可视化对比。}}{71}{figure.caption.40}\protected@file@percent }
+\newlabel{fig:neus_small_object_pk}{{4.10}{71}{小物体重建阶段结果可视化对比。}{figure.caption.40}{}}
+\newlabel{fig:psnr_curve_sub}{{4.11a}{72}{PSNR}{figure.caption.41}{}}
+\newlabel{sub@fig:psnr_curve_sub}{{a}{72}{PSNR}{figure.caption.41}{}}
+\newlabel{fig:ssim_curve_sub}{{4.11b}{72}{SSIM}{figure.caption.41}{}}
+\newlabel{sub@fig:ssim_curve_sub}{{b}{72}{SSIM}{figure.caption.41}{}}
+\newlabel{fig:lpips_curve_sub}{{4.11c}{72}{LPIPS}{figure.caption.41}{}}
+\newlabel{sub@fig:lpips_curve_sub}{{c}{72}{LPIPS}{figure.caption.41}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.11}{\ignorespaces 小物体重建过程中PSNR、SSIM 和 LPIPS 随训练迭代步数的变化曲线对比。}}{72}{figure.caption.41}\protected@file@percent }
+\newlabel{fig:small_object_convergence_curves}{{4.11}{72}{小物体重建过程中PSNR、SSIM 和 LPIPS 随训练迭代步数的变化曲线对比。}{figure.caption.41}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.4}三维资产重建实验分析}{72}{subsection.4.3.4}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {4.3.4}3D Asset Reconstruction Results and Analysis}{72}{subsection.4.3.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.12}{\ignorespaces 本章算法生成的三维资产示例。从左到右依次为输入图像、重建得到的三维资产、对应几何模型和纹理贴图。}}{73}{figure.caption.42}\protected@file@percent }
+\newlabel{fig:texture_example}{{4.12}{73}{本章算法生成的三维资产示例。从左到右依次为输入图像、重建得到的三维资产、对应几何模型和纹理贴图。}{figure.caption.42}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.13}{\ignorespaces MeshLab 与本章算法生成的纹理贴图对比。}}{74}{figure.caption.43}\protected@file@percent }
+\newlabel{fig:meshlab_compare}{{4.13}{74}{MeshLab 与本章算法生成的纹理贴图对比。}{figure.caption.43}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.5}局限性分析}{74}{subsection.4.3.5}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {4.3.5}Limitations Analysis}{74}{subsection.4.3.5}\protected@file@percent }
 \citation{muller2022instantngp,Li_2023_CVPR,Wang_2023_ICCV}
-\@writefile{lot}{\contentsline {table}{\numberline {4.2}{\ignorespaces 纹理贴图生成算法的 PSNR$\uparrow $ 对比（单位：dB）}}{74}{table.caption.43}\protected@file@percent }
-\newlabel{tab:texture_psnr_compare}{{4.2}{74}{纹理贴图生成算法的 PSNR$\uparrow $ 对比（单位：dB）}{table.caption.43}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.4}本章小结}{75}{section.4.4}\protected@file@percent }
-\@writefile{etoc}{\contentsline {section} {\numberline {\sffamily  4.4}Summary} {75}{section.4.4}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.2}{\ignorespaces 纹理贴图生成算法的 PSNR$\uparrow $ 对比（单位：dB）}}{75}{table.caption.44}\protected@file@percent }
+\newlabel{tab:texture_psnr_compare}{{4.2}{75}{纹理贴图生成算法的 PSNR$\uparrow $ 对比（单位：dB）}{table.caption.44}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.4}本章小结}{76}{section.4.4}\protected@file@percent }
+\@writefile{etoc}{\contentsline {section} {\numberline {\sffamily  4.4}Summary} {76}{section.4.4}}
 \@setckpt{chapters/chapter4}{
-\setcounter{page}{78}
+\setcounter{page}{79}
 \setcounter{equation}{8}
 \setcounter{enumi}{2}
 \setcounter{enumii}{0}
@@ -108,7 +111,7 @@
 \setcounter{subsubsection}{0}
 \setcounter{paragraph}{0}
 \setcounter{subparagraph}{0}
-\setcounter{figure}{12}
+\setcounter{figure}{13}
 \setcounter{table}{2}
 \setcounter{blankpage}{1}
 \setcounter{float@type}{16}
