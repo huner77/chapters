@@ -1,0 +1,509 @@
+%%==================================================
+%% chapter04.tex for Doctoral Thesis
+%% Based on user input - Images and Tables Commented Out
+%%==================================================
+
+% !TeX root = ../main.tex
+
+\chapter{基于隐式神经场的高保真化学资产重建}
+\enchapter[High-Fidelity 3D Reconstruction via Implicit Neural Fields]{High-Fidelity 3D Reconstruction of Chemical Apparatus Based on Implicit Neural Fields}
+\label{chap:high_fidelity_reconstruction}
+
+本章围绕化学资产重建这一目标，针对透明物体、小物体难以高质量重建和隐式重建结果难以直接用于下游仿真平台的问题提出了一种基于隐式神经场 NeuS 的高保真化学资产重建算法。该算法利用多视角 RGB 图像恢复物体几何，并构建了一个包含数据预处理、隐式场训练、网格提取与优化和纹理贴图生成的完整重建流程。
+在透明物体场景下，传统 NeuS 直接以零等值面作为目标表面的做法容易失效，因为透明区域的最大渲染权重并不总与零交叉位置一致，从而导致表面缺失。针对这一问题，本章从透明与不透明区域混合存在的几何特性出发，采用基于绝对距离场局部极小值搜索的统一表面提取策略，实现了对表面的稳定重建。
+此外，考虑到小物体在输入图像中像素占比较低、监督信号稀疏，NeuS 训练过程容易长时间停留在过渡态，本章进一步提出学习态增强策略，以加速训练初期的形状收敛，并为后续高频几何细节的刻画预留更多有效迭代。
+在纹理重建方面，针对 NeuS 隐式表示难以直接满足仿真平台对显式纹理资产需求的问题，本章构建了一条从 NeuS 隐式颜色场到高分辨率纹理贴图的自动化生成算法，通过 Xatlas 完成 UV 参数化，结合光栅化烘焙、形态学修复与 KNN 补全生成高精度纹理贴图。
+实验结果表明，本章算法能够有效提升小物体和透明物体的几何重建质量，并且在纹理贴图生成方面优于 MeshLab 工业通用方案，从而为后续化学实验仿真、视觉感知与机器人操作提供高保真的三维资产基础。
+
+\section{引言}
+\ensection{Introduction}
+
+在面向化学实验的具身智能任务场景中，机器人不仅需要识别实验物体的类别，还需要获得其准确的三维几何与纹理信息，从而支撑后续的抓取、操作、仿真与场景交互。然而，与通用物体相比，化学实验环境中的目标物体具有更强的特殊性：一方面，大量核心物体如烧杯、试管、冷凝管等通常由透明玻璃制成。另一方面，部分实验部件尺寸较小、且局部几何细节丰富。这些因素共同导致传统三维重建算法在化学物体场景下往往难以获得同时兼顾几何精度与纹理质量的重建结果。
+
+现有主流的 RGB-D 深度传感方案通常建立在较理想的表面反射假设之上，但透明玻璃表面普遍存在透射、折射与镜面反射等复杂光学现象，使得深度传感器容易产生大面积深度空洞、噪声与边界失真。近年来神经辐射场技术的发展为解决这些问题提供了新的思路，通过将场景建模为连续的坐标函数，利用体渲染在处理透明材质重建上展现出了显著优势，但在针对化学实验物体的具体应用中，仍面临三个核心挑战：一是对于透明物体，其表面在隐式距离场中未必稳定对应于零等值面，直接沿用传统等值面提取策略，容易出现表面缺失、内部伪影与局部结构错误。二是对于小物体重建，由于其在输入图像中所占像素比例较低，导致训练初期有效监督信号不足，网络容易在过渡态停留过久，从而压缩后续学习态时用于高频细节学习的有效迭代空间。三是神经隐式算法得到的是隐式表征，难以直接满足下游仿真平台、渲染引擎和具身智能系统对于显式网格、标准 UV 坐标与高分辨率纹理贴图的使用需求。
+
+针对上述问题，本章围绕化学实验资产的高保真重建需求，提出了一套基于隐式神经场的重建算法。整体流程如图~\ref{fig:neus_pipeline} 所示，该算法主要包含数据预处理、网络训练、网格提取和纹理贴图生成四个模块，从而形成一条由多视角图像输入到高质量显式三维资产输出的完整重建流程。
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/ch4/Neus_Pipeline}
+  \caption{基于 NeuS 的高保真化学资产重建流程图。包含数据预处理、网络训练、网格提取和纹理贴图生成四个模块。}
+  \label{fig:neus_pipeline}
+\end{figure}
+
+具体而言，本章首先设计了面向 NeuS 重建的数据预处理流程，通过 COLMAP 恢复相机参数，并结合主体掩模完成稀疏点云去噪与空间归一化，为后续隐式场优化建立稳定的坐标参考。在此基础上，本章把 NeuS 作为隐式重建网络，并针对化学实验物体几何重建中的两个关键问题进行改进：一是在训练阶段，针对小物体训练初期监督信号稀疏、收敛缓慢的问题，提出学习态增强策略，以加速几何初始收敛并为后续细节学习预留更多有效迭代。二是在网格提取阶段，针对透明物体表面与零等值面不稳定对应的问题，采用基于绝对距离场局部极小值搜索的统一表面提取策略，以提高透明区域与不透明区域的几何恢复质量。进一步地，为使隐式重建结果能够直接服务于下游仿真与渲染应用，本章构建了从隐式颜色场到高分辨率显式纹理贴图的自动化生成流程，利用 xatlas 完成 UV 参数化，并结合光栅化烘焙、形态学修复与 KNN（K-Nearest Neighbors\cite{cover1967nearest}, KNN） 补全，生成可直接用于主流仿真平台的高质量纹理资产。
+
+\section{算法设计与实现}
+\ensection{Algorithm Design and Implementation}
+
+\subsection{数据预处理}
+\ensubsection{Data Preprocessing}
+
+在基于神经隐式场的三维重建算法中，网络训练主要依赖多视角图像、主体掩膜（Mask）以及相机参数，以建立图像像素与三维空间采样点之间的对应关系。对于 NeuS 算法，还需要对场景空间范围进行合理归一化，以保证射线采样与网络优化过程的数值稳定性。因此，在进行网络训练之前，需要利用多视图几何算法对输入图像进行预处理，从而恢复相机位姿，并为后续隐式场重建建立稳定的坐标参考。
+
+基于上述需求，本节介绍用于高保真资产重建的数据预处理流程。该流程通过多视角图像采集、主体分割以及结构恢复等步骤，为后续神经隐式场网络训练提供准确的相机参数与包围盒。
+
+首先，针对目标物体拍摄多视角的RGB图像序列，采用SFM（Structure-from-Motion\cite{schonberger2016sfm}, SfM）估计相机位姿。在具体实现中，本章采用 COLMAP 开源软件。COLMAP 首先检测图像中的 SIFT 特征点，并在不同视角之间建立特征对应关系；随后利用对极几何约束剔除误匹配点，保证跨视图匹配结果的一致性；在此基础上进一步恢复每张图像的内参与外参，并生成场景的稀疏点云。
+
+% \begin{figure}[htbp]
+%     \centering
+%     \includegraphics[width=\textwidth,height=3cm]{figures/ch4/colmap_pipeline.png}
+%     \caption{COLMAP 多视图重建流程图。该流程主要包括特征提取、特征匹配、几何验证以及稀疏三维重建等步骤。}
+%     \label{fig:colmap_pipeline}
+% \end{figure}
+
+由于 COLMAP 生成的原始稀疏点云中夹杂较多偏离目标物体区域的离群噪声点，若直接用此进行后续训练，则会导致物体中心、包围范围及尺度估计出现偏差，进而影响射线采样范围的设置以及网络训练的稳定性。如图~\ref{fig:neus_noise} 所示，COLMAP 初始生成的点云往往夹杂较多环境噪声，因此在启动 NeuS 网络训练前，需要对稀疏点云进行精细化的噪声剔除与空间范围修正。
+
+因此本章提出一种基于主体Mask的去噪算法，实现稀疏点云的自动去噪。具体而言，利用物体分割算法\cite{kirillov2023segany}对多视图提取主体 Mask，并将三维空间点根据估计得到的相机参数投影至所有可见视角，统计该点在对应Mask内被判定为主体的频率。若某点在超过半数的可见视图中被判定为背景，则将其识别为噪声点并予以剔除。该算法能够有效清除目标物体周围的散乱噪声，保留能够真实反映目标物体空间范围的有效稀疏点云，为后续场景归一化提供可靠依据。
+
+在完成点云清洗后，为满足 NeuS 算法对输入空间尺度稳定性的要求，本章对剩余点云执行归一化处理。具体而言，首先根据清洗后的稀疏点云估计目标物体的空间中心，并将其平移至世界坐标系原点附近；随后根据点云的整体空间范围计算统一的缩放系数，将场景映射到单位球邻域内，从而为隐式场重建建立一个尺度一致、数值稳定的标准坐标空间，并提升后续体渲染优化与表面重建的稳定性。
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/ch4/Neus_noise.png}
+    \caption{基于主体Mask的去噪框架图。COLMAP 生成的原始稀疏点云，包含大量环境噪声。利用重投影到主体Mask中剔除噪声，恢复出干净的点云。}
+    \label{fig:neus_noise}
+\end{figure}
+
+
+\subsection{面向透明物体的几何表面提取}
+\ensubsection{Geometry Surface Extraction for Transparent Objects}
+\label{sec:ch4_transparent_object}
+
+由于光线透射与复杂折射的影响，透明物体内部通常缺乏可稳定跟踪的纹理特征，因此透明物体重建一直是三维重建领域中的难点之一。Ichnowski等人的工作\cite{ichnowski2022dexnerf} 表明，NeRF 由于具备视点相关的外观建模能力，能够在训练过程中学习与透明性相关的几何信息，并恢复出质量较高的深度结果。
+
+在基于 NeuS 的三维重建中，网络通过体渲染对隐式距离场进行优化，并通常将该距离场的零等值面视为目标物体表面，再借助 Marching Cubes 提取显式网格。对于不透明物体，这一策略通常是有效的，因为 NeuS 构造的体渲染权重在局部满足无偏性，权重峰值能够与零等值面较好对齐。然而，这一结论依赖于表面满足不透明假设；当重建对象扩展到透明物体时，零等值面与真实表面之间的对应关系不再总是成立。
+
+这是因为透明物体的成像机理与不透明物体存在明显差异。对于透明区域，光线在传播过程中会受到透射特性的影响，使得体渲染权重的最大值不一定落在距离场的零交叉位置。Zhang等人的工作\cite{zhang2024alphaneus} 表明，在 NeuS 学得的距离场中，当表面不透明度较低时，最大渲染权重更可能对应于距离场中的非负局部极小值；而当表面不透明度较高时，最大渲染权重又会重新与零等值面接近对齐。因此，在透明与不透明区域共存的场景中，NeuS 学得的距离场不再是单一的标准 SDF，而更接近一种混合的 SDF/UDF 场。
+
+在这种情况下，若仍直接使用零等值面作为统一的表面提取条件，则只能较稳定地恢复不透明区域，而透明表面由于往往对应正的局部极小值，通常不会出现在零等值面上，从而导致显式网格出现缺失或空洞。若改用固定的非零阈值进行等值面提取，虽然有时能够包络透明外壳，但由于透明区域局部极小值的大小并不固定，且会随空间位置变化，因此单一阈值难以同时匹配所有真实表面，提取结果往往只是近似包络，而非与渲染几何一致的目标表面。
+
+基于上述分析，本章不再将零等值面简单视为唯一的目标表面，而是将与最大渲染权重对齐的位置统一定义为无偏表面。按照这一标准，不透明区域的目标表面仍可表示为距离场的零等值面，而透明区域的目标表面则对应距离场中的非负局部极小值。为在同一框架下统一提取这两类表面，本章进一步对 NeuS 学得的距离场 $f$ 取绝对值，构造绝对距离场
+\begin{equation}
+f^{a}(\mathbf{x}) = |f(\mathbf{x})|.
+\end{equation}
+经过这一变换后，原本对应透明表面的非负局部极小值以及原本对应不透明表面的零等值面，都会统一转化为 $f^{a}$ 中的局部极小值，从而将原始的混合 SDF/UDF 场转化为更适合局部极小值搜索的场表示。
+
+
+\begin{algorithm}[!t]
+\caption{Surface Extraction for Transparent Objects}
+\label{algo:transparent_surface_extraction}
+\begin{algorithmic}[1]
+\STATE \textbf{Stage I: Initial Enclosing Mesh Extraction}
+\STATE $f^{a}(\mathbf{x}) \gets |f(\mathbf{x})|$
+\STATE $(V,F) \gets \mathrm{MC}(f(\mathbf{x}), r)$
+
+\STATE
+\STATE \textbf{Stage II: Coarse Projection}
+\FOR{$t=1$ to $T_1$}
+    \STATE $C \gets \mathrm{Centroid}(V,F)$
+    \STATE Compute the coarse loss
+    \[
+    L_{\mathrm{coarse}}
+    \gets
+    \sum_{v_i \in V} f^{a}(v_i)
+    +
+    \sum_{c_i \in C} f^{a}(c_i)
+    +
+    \lambda_1 \sum_{v_i \in V} w(v_i)\left\|\Delta v_i\right\|^2
+    \]
+    \STATE Update $V$ by one optimization step on $L_{\mathrm{coarse}}$
+\ENDFOR
+\STATE $C^{(1)} \gets \mathrm{Centroid}(V,F)$
+\STATE $N^{(1)} \gets \mathrm{FaceNormal}(V,F)$
+
+\STATE
+\STATE \textbf{Stage III: Refinement}
+\FOR{$t=1$ to $T_2$}
+    \STATE $C \gets \mathrm{Centroid}(V,F)$
+    \STATE Compute the refinement loss
+    \[
+    L_{\mathrm{fine}}
+    \gets
+    \sum_{v_i \in V} f^{a}(v_i)
+    +
+    \sum_{c_i \in C} f^{a}(c_i)
+    +
+    \lambda_2 \sum_{c_i \in C}
+    \left\|
+    \bigl(c_i-c_i^{(1)}\bigr)\times n_i^{(1)}
+    \right\|
+    \]
+    \STATE Update $V$ by one optimization step on $L_{\mathrm{fine}}$
+\ENDFOR
+
+\STATE $M^\star \gets (V,F)$
+
+\end{algorithmic}
+\end{algorithm}
+
+
+在具体实现上，采用“先包围、后投影”的表面提取策略。首先，在原始距离场 $f$ 上选取一个用户指定的非零等值阈值 $r$，并通过 Marching Cubes 提取初始包围网格
+\begin{equation}
+M = \mathrm{MC}\bigl(f(\mathbf{x}),\, r\bigr),
+\end{equation}
+其中，$r$ 需要大于目标表面对应的局部极小值，以保证初始网格 $M$ 作为外层包围，能够完整覆盖待恢复的真实无偏表面。该网格并非最终结果，而是为后续投影优化提供一个拓扑连续的初始曲面。
+
+在得到初始包围网格后，本章参考 Hou 等人的工作\cite{Hou2023DCUDF} 的局部极小值投影思想，将网格顶点及面心逐步收缩到绝对距离场 $f^{a}$ 的局部极小值位置。记初始网格的顶点集合为 $V$，面片连接关系为 $F$，由当前网格确定的三角面重心集合记为 $C(V,F)$。第一阶段采用粗投影策略，其优化目标写为
+\begin{equation}
+\min_{V}
+\sum_{v_i \in V} f^{a}(v_i)
++\sum_{c_i \in C(V,F)} f^{a}(c_i)
++\lambda_1 \sum_{v_i \in V} w(v_i)\left\|\Delta v_i\right\|^2,
+\label{eq:ch4_coarse_projection}
+\end{equation}
+其中，$\Delta v_i$ 为顶点 $v_i$ 的离散 Laplace 项，$w(v_i)$ 为与邻接三角面面积相关的权重。该阶段通过联合约束顶点与面心向绝对距离场的局部极小值收缩，并利用 Laplacian 正则保持优化过程的平滑性与稳定性，从而驱动初始包围网格整体逼近目标表面。
+
+在粗投影结束后，记第一阶段结束时的三角面重心集合为 $C^{(1)}$，对应面法向集合为 $N^{(1)}=\{n_i^{(1)}\}$。在此基础上，第二阶段进一步引入法向约束进行细化，其优化目标为
+\begin{equation}
+\min_{V}
+\sum_{v_i \in V} f^{a}(v_i)
++\sum_{c_i \in C(V,F)} f^{a}(c_i)
++\lambda_2 \sum_{c_i \in C(V,F)}
+\left\|
+\bigl(c_i-c_i^{(1)}\bigr)\times n_i^{(1)}
+\right\|,
+\label{eq:ch4_refine_projection}
+\end{equation}
+其中，$c_i^{(1)}$ 表示第一阶段结束时第 $i$ 个三角面的重心位置，$n_i^{(1)}$ 表示对应三角面的法向。该阶段通过约束面心主要沿参考法向方向移动，抑制切向漂移，从而进一步提高最终表面与真实无偏表面的贴合精度，并减少局部几何伪影。
+
+
+算法~\ref{algo:transparent_surface_extraction} 给出了上述统一表面提取过程的完整流程。通过“初始包围网格提取—粗投影收缩—法向约束细化”三个阶段，初始包围网格会逐步收缩到绝对距离场的局部极小值处，从而实现对透明表面与不透明表面的统一恢复。
+
+
+
+\subsection{基于学习态增强的小物体重建加速策略}
+\ensubsection{Strategy for Ac
+celerating Small Object Reconstruction}
+\label{sec:adaptive_gradient}
+
+\begin{figure}[!t]
+    \centering
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ch4/small_object_1}
+        \caption{}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ch4/small_object_2}
+        \caption{}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ch4/small_object_3}
+        \caption{}
+    \end{subfigure}
+    \caption{小物体示意图。小物体仅覆盖图像中的极小一部分区域，导致有效监督信号较为稀疏。}
+    \label{fig:small_object_pixels}
+\end{figure}
+
+在小物体重建任务中，由于目标区域在输入图像中通常仅占据较少像素，如图~\ref{fig:small_object_pixels} 所示，因此随机采样得到的训练光线大多落在背景或自由空间区域，真正穿过物体表面及轮廓附近的有效光线比例较低，从而抑制了隐式几何表面的收敛效率。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/ch4/NeuS_three_tai.png}
+\caption{NeuS 训练过程中的几何演化图。训练通常遵循从初始单位球（初始态）到粗略几何（过渡态），再到精细表面刻画（学习态）的演化路径。}
+\label{fig:neus_three_stage}
+\end{figure}
+这一问题在基于 NeuS 的重建过程中表现得尤为明显。如图~\ref{fig:neus_three_stage} 所示，基于 NeuS 的神经隐式表面重建通常经历三个关键阶段：首先，通过初始化将场景表示为单位球。随后，在过渡态中，单位球逐步坍缩并收敛为与目标物体形状接近的粗略几何。最后，在学习态下对高频几何细节进行细化。对于小物体而言，由于训练初期能够提供有效几何信息的光线数量有限，网络往往需要更长时间才能完成从初始单位球到粗略物体形状的收敛过程，因此更容易在过渡态中停留较久。
+
+与此同时，在神经辐射场类算法中，对于每个物体都需要专门训练一个网络，这一过程通常涉及高达 30 万次的迭代优化，在单张主流显卡上往往需耗费数十小时的计算时间~\cite{wang2021neus}。若网络因监督信号稀疏而长期停留在过渡态，那么大量迭代步数就会被消耗在几何表面的初步构建上，真正分配给后期细节学习的优化预算将明显减少。这不仅降低了整体训练效率，也会直接限制最终的重建精度。
+
+基于上述分析，本章提出一种学习态增强策略。该策略旨在针对小物体训练早期有效监督不足的问题，通过动态调节采样方向与有符号距离函数梯度方向的权重，引导网络更快完成初始形状收敛，缩短过渡态持续时间，从而尽早进入面向细节优化的学习态，并为高保真几何重建预留更充分的有效迭代空间。
+
+
+
+具体而言，设当前采样点为 $\mathbf{x}$，对应射线方向为 $\mathbf{d}$，有符号距离函数（Signed Distance Function, SDF）记为 $f(\mathbf{x})$。为了刻画当前射线传播方向与局部几何法向之间的关系，首先定义射线方向与 SDF 梯度之间的方向一致性量 $\cos_t$：
+\begin{equation}
+\cos_t = \mathbf{d} \cdot \nabla f(\mathbf{x}),
+\end{equation}
+其中，$\mathbf{d}$ 表示当前光线的方向向量，$\nabla f(\mathbf{x})$ 表示该点处的 SDF 梯度。从几何意义上看，$\nabla f(\mathbf{x})$ 对应隐式表面在该点附近的局部法向方向，因此 $\cos_t$ 反映了当前采样方向与局部几何走势之间的一致程度。
+
+然而，在小物体重建过程中，训练早期的几何形状尚不稳定，若过早施加过强的方向约束，容易影响粗几何的快速收敛；而在训练后期，为了提升表面定位精度与细节恢复能力，又需要更严格的方向一致性约束。基于这一考虑，本章进一步引入模式切换因子 $\cos_a$，用于根据训练进度在宽松引导与严格约束之间进行平滑过渡：
+\begin{equation}
+\cos_{a}=
+\begin{cases}
+1, & \text{if } \text{cos\_step\_end}=0,\\[3pt]
+\min\!\left(1,\dfrac{\text{cur\_step}}{\text{cos\_step\_end}}\right), & \text{otherwise},
+\end{cases}
+\end{equation}
+其中，$\text{cur\_step}$ 为当前训练步数，$\text{cos\_step\_end}$ 为控制阶段切换的超参数。当训练处于初期时，$\cos_a$ 较小；随着训练推进，$\cos_a$ 逐步增大并最终趋近于 $1$，表示优化重点由粗几何收敛逐渐转向细节刻画。
+
+在此基础上，将训练阶段信息与方向约束共同结合，定义自适应采样因子 $\cos_i$：
+\begin{equation}
+\cos_i=(1-\cos_a)\cos_i^{\text{soft}}+\cos_a \cos_i^{\text{hard}},
+\end{equation}
+其中，$\cos_i \leq 0$，$\cos_i^{\text{soft}}$ 和 $\cos_i^{\text{hard}}$ 分别表示宽松模式与严格模式下的方向项。由此，$\cos_i$ 在训练初期更接近 $\cos_i^{\text{soft}}$，此时方向约束相对平缓，有利于利用 SDF 梯度先验引导隐式表面快速收缩；而在训练后期，$\cos_i$ 逐渐过渡到 $\cos_i^{\text{hard}}$，从而对采样方向施加更严格的几何一致性约束，以提升表面定位精度。
+
+最后，将上述自适应采样因子用于当前采样区间两端的 SDF 估计，得到
+\begin{equation}
+\begin{cases}
+    \text{SDF}_{\text{next}} = \text{SDF} + \cos_i \cdot D,\\
+    \text{SDF}_{\text{prev}} = \text{SDF} - \cos_i \cdot D,
+\end{cases}
+\end{equation}
+其中，$D$ 表示当前采样区间长度。该估计方式的核心思想在于：利用 $\cos_i$ 对相邻位置的 SDF 变化幅度进行自适应调节。当当前区域的几何趋势较明确时，$\cos_i$ 能够放大区间两端的 SDF 差异，从而加快表面位置的收敛；而在几何不确定或表面尚未稳定的区域，较为保守的 $\cos_i$ 则有助于抑制过大的更新步幅，避免跨越真实表面。通过这种方式，本章算法在训练初期能够更快完成由初始单位球到目标粗几何的过渡，而在训练中后期则能够将更多优化预算集中于小物体表面细节的恢复与精细建模。
+
+
+\subsection{基于 NeuS 的高分辨率纹理资产生成算法}
+\ensubsection{High-Resolution Texture Asset Generation Algorithm Based on NeuS}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/ch4/Xatlas_Stage_PK.png}
+\caption{纹理贴图生成流程图。主要包含网格提取、网格颜色查询、UV 坐标生成、光栅化烘焙以及纹理后处理修复五个阶段。}
+\label{fig:xatlas_stage_pk}
+\end{figure}
+
+在机器人仿真平台~\cite{kolve2017ai2thor,savva2019habitat,shen2021igibson,gu2023maniskill2,li2024chemistry3d,li2025labutopia}中，场景中的物体通常需要以显式三维资产的形式存在，即三维资产不仅要包含显式几何网格，还需要具备材质与纹理信息，以支持渲染、碰撞检测等功能。然而，NeuS 作为一种隐式神经表面重建算法，尽管能够生成高质量的几何表面与颜色信息，但其几何与颜色主要编码在神经网络参数中，难以直接应用到主流机器人仿真平台中。
+
+
+针对这一问题，本章构建了一条从 NeuS 神经隐式场到显式纹理资产的自动化生成流程，其核心思路如图~\ref{fig:xatlas_stage_pk}和流程\ref{algo:neus_texture_generation_en} 所示。
+
+\begin{algorithm}[htbp]
+\caption{High-Resolution Texture Asset Generation Based on NeuS}
+\label{algo:neus_texture_generation_en}
+\begin{algorithmic}[1]
+
+\STATE $M \gets \text{LoopSubdivide}(M)$
+
+\FOR{each vertex $\mathbf{v}_i \in M$}
+    \STATE $\mathbf{d}_i \gets \text{EstimateVertexNormal}(\mathbf{v}_i)$
+    \STATE $\mathbf{c}_i \gets c_{\theta}(\mathbf{v}_i,\mathbf{d}_i)$
+\ENDFOR
+
+\STATE $\mathrm{uv} \gets \text{GenerateUV}(M)$
+\STATE $I_{\text{tex}} \gets \text{InitTextureImage}()$
+
+\FOR{each face $f_j \in M$}
+    \STATE $\Omega_j \gets \text{FindFaceToUV}(f_j,\mathrm{uv})$
+    \FOR{each pixel $p \in \Omega_j$}
+        \STATE $I_{\text{tex}}(p) \gets \text{BarycentricInterpolate}(p,f_j,\mathrm{uv})$
+    \ENDFOR
+\ENDFOR
+
+\STATE $I_{\text{tex}} \gets \text{DilateBoundaryRegions}(I_{\text{tex}})$
+
+\FOR{each uncolored pixel $p \in I_{\text{tex}}$}
+    \STATE $I_{\text{tex}}(p) \gets \text{KNNColorInterpolate}(p,I_{\text{tex}})$
+\ENDFOR
+
+\end{algorithmic}
+\end{algorithm}
+
+首先需要对重建得到的显式网格进行几何优化与色彩提取。针对训练完成的 NeuS 网络，本章采用第~\ref{sec:ch4_transparent_object} 节所提出的算法提取显式网格$M$，并进一步采用 Loop 细分算法（Loop Subdivision）\cite{loop1987smooth} 进行拓扑细化。该算法通过在每条边上插入新顶点并重计算原始顶点位置，将每个三角形面片分裂为四个子三角形。这一操作能够有效缓解局部面片分布不均的问题，为后续基于顶点的颜色采样提供更为均匀且密集的离散点集。
+
+在获得细化后的高精度网格后，本章进一步利用 NeuS 学习到的颜色场 $c_\theta(\mathbf{x}, \mathbf{d})$ 为几何模型赋予颜色信息。由于原始颜色场具有一定的视角相关性，而工业标准的纹理映射通常要求表面属性尽可能保持视角无关，本章采用一种基于法线方向查询的采样策略：对于每个网格顶点 $\mathbf{v}_i$，根据其邻接面片的法向量计算单位法向 $\mathbf{n}_i$，并将该方向作为查询方向 $\mathbf{d}_i$ 传入颜色场，即
+\[
+\mathbf{c}_i = c_\theta(\mathbf{v}_i, \mathbf{d}_i), \qquad \mathbf{d}_i = \mathbf{n}_i .
+\]
+该策略能够在较大程度上保留 NeuS 所学习到的局部纹理细节，并使顶点颜色更符合后续显式纹理映射的需要。
+
+在完成顶点颜色提取后，需要进一步建立三维表面与二维纹理空间之间的映射关系，即生成纹理坐标（UV）。为此，本章引入 Xatlas~\cite{young_xatlas}开源纹理生成库对显式网格进行自动参数化处理，其核心过程如图~\ref{fig:xatlas_uv} 所示。该算法首先依据网格的曲率分布与局部几何特征，对复杂表面进行自动化分块（Charts），再通过基于几何代价的切割与布局优化，将这些局部表面展开并紧凑排列到统一的二维纹理坐标空间中。该过程为后续将三维表面的颜色信息映射到二维纹理图像奠定了几何基础。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/ch4/Xatlas_UV.png}
+\caption{UV 坐标生成核心流程。}
+\label{fig:xatlas_uv}
+\end{figure}
+
+在确定 UV 映射关系后，重建流程进入颜色烘焙与光栅化阶段。本章在纹理空间中对每个三角面片执行光栅化操作，并利用重心坐标插值将面片三个顶点上的颜色连续映射到对应的二维像素区域。通过这一过程，原本定义在离散网格顶点上的颜色信息被转化为连续分布在纹理平面中的像素颜色，从而实现了从顶点着色到标准二维纹理贴图的转换。然而，由于光栅化精度限制以及 UV 分块边界处的对齐误差，初步生成的纹理贴图中往往仍会残留少量未被赋色的像素区域，表现为局部的微小黑洞或纹理缺口。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/ch4/Xatlas_PNG.png}
+\caption{纹理贴图生成核心流程。}
+\label{fig:xatlas_png}
+\end{figure}
+
+针对上述光栅化后残留的局部空洞问题，本章进一步设计了纹理修复步骤。如图~\ref{fig:xatlas_png} 所示，首先通过形态学膨胀操作引导边缘颜色向邻域适度扩展，以减轻小尺度边界裂缝带来的纹理断裂；随后，对仍未被赋色的像素应用 KNN 搜索，在纹理平面中检索距离该空洞像素最近的有效采样点，并基于邻域颜色对其进行插值补全。通过上述处理，本章能够有效修复 UV 分块边界附近和局部采样不足区域所产生的纹理缺失，从而最终生成连续性更好、可直接应用于仿真平台与图形学渲染系统的高分辨率纹理贴图。
+
+
+\section{实验结果与分析}
+\ensection{Experimental Results and Analysis}
+
+\subsection{实验设置}
+\ensubsection{Experimental Setup}
+
+本章实验在 Ubuntu 20.04 操作系统下完成，采用 NVIDIA GeForce RTX 3090 显卡进行训练与推理，CUDA 版本为 11.7，Python 版本为 3.7。
+
+在数据集方面，透明物体重建实验采用 Ichnowski 等人的工作\cite{ichnowski2022dexnerf}公开的透明物体数据和 Synthetic Blender Dataset\cite{mildenhall2020nerf} 验证算法在透明材质场景下的几何恢复能力。小物体重建实验采用 Jittor 平台公开的神经隐式表示三维重建数据\cite{jittor2023implicit3dchallenge}。纹理贴图生成实验采用第 26 届全国计算机辅助设计与图形学学术会议"高精度三维重建挑战赛"提供的公开数据集\cite{cadcg2023reconchallenge}，该数据集包含 21 个具有高分辨率输入图像及对应相机参数的物体，适合用于评估三维资产的重建效果。
+
+在对比设置方面，由于本章的所有工作均建立在原始 NeuS 框架之上，因此本章统一采用原始 NeuS 作为对比基线算法，验证各改进模块的有效性。对于透明物体实验，基线算法直接采用零等值面提取方式生成显式网格，本章算法则采用基于绝对距离场局部极小值搜索的统一表面提取策略，以比较两者在透明区域表面恢复能力上的差异。对于小物体实验，基线算法采用原始 NeuS 的训练机制，本章算法在此基础上引入学习态增强策略，以比较两种算法在相同训练预算下的收敛速度、轮廓成形过程以及最终重建质量。对于纹理重建实验，本章将同一组顶点带有颜色的显式网格分别输入 MeshLab \cite{cignoni2008meshlab} 与本章算法进行纹理生成，MeshLab 采用其内置的Texture from Vertex Color功能完成纹理展开与贴图生成。本章算法则采用 Xatlas 进行 UV 参数化，并结合光栅化烘焙、纹理贴图修复，以比较不同纹理生成方案在表面连续性与重渲染保真度上的表现。
+
+在训练与重建参数上，除特殊说明外，各组实验均采用一致的配置。NeuS 的总训练迭代次数设置为 20 万次，Marching Cubes 提取网格时的体素分辨率设置为 $512 \times 512 \times 512$，最终生成的纹理贴图分辨率设置为 $2048 \times 2048$。
+
+\subsection{透明物体实验分析}
+\ensubsection{Reconstruction Results and Analysis on Transparent Objects}
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch4/transparent_object_vs_neus.png}
+    \caption{透明物体几何提取可视化结果对比。第一列为输入 RGB 图像，第二列为 NeuS 的重建结果，第三列为本章算法的重建结果，第四列为对本章算法手动去除外表面后的内部结构可视化结果。图中黑色的片段是自动法线计算过程中部分法向发生翻转所致，并非几何提取错误。}
+    \label{fig:neus_transparent_pk}
+\end{figure}
+图~\ref{fig:neus_transparent_pk}展示了 NeuS 与本章算法的可视化对比结果，原始 NeuS 在透明区域往往难以得到稳定的零交叉表面，导致最终提取出的网格存在明显的空洞和缺失。相比之下，本章算法通过在绝对距离场上搜索局部极小值，并将透明区域与不透明区域统一纳入同一提取框架，有效缓解了上述问题，并保留较好的内部几何信息。需要说明的是，在结果中可见少量黑色几何片段，这主要是由于自动法向计算过程中部分法向方向发生翻转所致，并非几何提取错误所引起。
+
+\FloatBarrier
+
+
+表~\ref{tab:transparent_cd_compare} 从定量的角度展示了本章算法与原始 NeuS 在 Synthetic Blender 数据集上的 Chamfer Distance 对比结果。可以看出，本章算法在全部测试对象上均取得了更低的 CD 值，平均值由 23.9\,mm 显著降低至 5.4\,mm。这表明，相比于直接基于零等值面提取网格的方式，本章所提出的统一表面提取策略能够更准确地定位透明物体的真实外表面，从而有效提升几何重建精度。
+
+\begin{table}[htbp]
+\centering
+\caption{透明物体重建的 Chamfer Distance$\downarrow$对比（单位：mm）}
+\label{tab:transparent_cd_compare}
+\small
+\setlength{\tabcolsep}{12pt}
+\begin{tabular}{ccc}
+\toprule
+物体类别 & NeuS & Ours \\
+\midrule
+Bottle     & 7.1  & \textbf{3.7} \\
+Case       & 21.2  & \textbf{5.4} \\
+Jar        & 43.2 & \textbf{9.2} \\
+Jug        & 10.8  & \textbf{4.1} \\
+Snowglobe  & 37.2  & \textbf{4.6} \\
+\midrule
+平均值     & 23.9 & \textbf{5.4} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+综合实验分析，针对原始 NeuS 在透明区域中容易因零交叉位置与真实表面不一致而产生表面缺失，从而影响最终网格的完整性与几何准确性问题，本章算法通过在绝对距离场中搜索局部极小值位置，并将透明区域与不透明区域纳入统一的表面提取框架，在透明物体重建任务中表现出更好的稳定性与适用性，能够在保持整体结构完整性的同时，更准确地恢复物体的几何边界。
+
+
+\subsection{小物体重建实验分析}
+\ensubsection{Reconstruction Results and Convergence Analysis on Small Objects}
+
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch4/Neus_Small_Object_PK.png}
+    \caption{小物体重建阶段结果可视化对比。}
+    \label{fig:neus_small_object_pk}
+\end{figure}
+
+本节首先通过定性对比验证算法对小物体的重建能力。如图~\ref{fig:neus_small_object_pk} 所示，在同等计算预算下，本章算法得到的几何重建结果显著优于原始 NeuS。小物体由于在图像空间占据的像素比例较低，在训练初期往往面临监督信号稀疏的问题，导致模型长时间停留在低频特征的学习上。针对这一挑战，本章引入了采样方向与 SDF 梯度方向的动态调节机制，加速网络从初始态向过渡态（10k~50k 次迭代）的跨越。这种策略使得网络能够快速建立粗几何轮廓，从而在后续的学习态（50k~200k 次迭代）中，将更多的计算资源集中于高频细节的精细刻画。
+
+\begin{figure}[!t]
+    \centering
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ch4/psnr_curve.png}
+        \caption{PSNR}
+        \label{fig:psnr_curve_sub}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ch4/ssim_curve.png}
+        \caption{SSIM}
+        \label{fig:ssim_curve_sub}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ch4/lpips_curve.png}
+        \caption{LPIPS}
+        \label{fig:lpips_curve_sub}
+    \end{subfigure}
+    \caption{小物体重建过程中PSNR、SSIM 和 LPIPS 随训练迭代步数的变化曲线对比。}
+    \label{fig:small_object_convergence_curves}
+\end{figure}
+
+
+为了客观评估模型的收敛效率，图~\ref{fig:small_object_convergence_curves} 展示了 PSNR、SSIM 和 LPIPS 三项核心指标随训练迭代步数的变化曲线。实验结果表明，在训练初期约 20k 次迭代时，两种算法的性能较为接近；随着训练逐步进入过渡阶段和细节学习阶段，本章算法在收敛趋势上表现出更明显的优势。具体而言，PSNR 和 SSIM 提升更快，LPIPS 下降更明显，且最终均与基线算法拉开了稳定差距，这表明学习态增强策略有效加速了几何收敛过程，促使模型更早形成稳定的几何与外观表征，并更早进入后续的细节优化阶段，从而在相同训练预算下获得更好的重建质量。
+
+
+综合最终重建结果与训练过程分析可以看出，本章所提算法能够有效缓解小物体在训练初期因监督信号稀疏而导致的长时间过渡问题，使模型更早进入稳定的几何细化阶段，从而为后续高频细节学习预留更多有效迭代空间，并最终提升小物体的重建精度与细节完整性。
+
+
+\subsection{三维资产重建实验分析}
+\ensubsection{3D Asset Reconstruction Results and Analysis}
+\begin{figure}[!t]
+  \centering
+  \includegraphics[width=0.9\textwidth,height=0.75\textheight]{figures/ch4/texture_example}
+  \caption{本章算法生成的三维资产示例。从左到右依次为输入图像、重建得到的三维资产、对应几何模型和纹理贴图。}
+  \label{fig:texture_example}
+\end{figure}
+本节旨在验证所提算法将隐式神经场结果转换为高保真显式三维资产的有效性。图~\ref{fig:texture_example} 展示了本章所提的高保真资产重建算法的重建效果，结果表明，本章算法能够将输入图像中的物体重建为较精细的几何模型和纹理贴图。对于苦瓜表面的凹凸细节和牛角包的烘焙纹理特征，算法均能够较准确地刻画。对于玉米的颗粒重复结构，生成的纹理贴图也较好地保留了原始图像中的外观特征，未出现明显的错乱与遗漏。
+
+\FloatBarrier
+
+为了进一步评价重建资产的外观保真度，本章将所提算法与工业开源软件 MeshLab 进行了定性对比，如图~\ref{fig:meshlab_compare}所示。MeshLab 算法在三角形面片之间存在肉眼可见的纹理断层，而本章算法通过稳定的 UV 参数化与后处理修复策略，生成的纹理贴图在表面连续性和细节还原方面表现更为出色。
+
+\begin{figure}[!t]
+  \centering
+  \includegraphics[width=0.8\textwidth]{figures/ch4/MeshLab_Compare.png}
+  \caption{MeshLab 与本章算法生成的纹理贴图对比。}
+  \label{fig:meshlab_compare}
+\end{figure}
+
+为进一步量化评估重建模型的外观保真度并验证各核心模块的效果，本章以 PSNR 为评价指标，在 PyTorch3D 中对 21 个物体生成的带纹理 OBJ 模型进行了逐视角重渲染对比, 对同一物体全部视角的 PSNR 取平均，得到该物体的平均 PSNR。实验共设置三种方案：基于 MeshLab 顶点颜色烘焙的基准方案（MeshLab）、剔除形态学修复模块的消融版本（Ours w/o Repair）以及本章完整算法（Ours）。结果如表~\ref{tab:texture_psnr_compare} 所示，本章完整算法在绝大多数场景中均取得了最优表现，其平均 PSNR 达到 25.509 dB，相较于 MeshLab 基准和无修复版本分别提升了 2.574 dB 与 1.432 dB。这一定量结果表明，稳定的 UV 参数化为纹理映射奠定了良好的几何基础，而本章设计的后处理修复算法进一步提升了纹理贴图精度。
+
+综上所述，定性观察与定量实验均表明，本章构建的自动化纹理生成算法能够高效地将 NeuS 的隐式颜色场转换为高质量的显式纹理资产，能够为后续的物理仿真、图形渲染与具身智能任务提供高质量的三维资产基础。
+
+
+\begin{table}[!t]
+\centering
+\caption{纹理贴图生成算法的 PSNR$\uparrow$ 对比（单位：dB）}
+\label{tab:texture_psnr_compare}
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{cccc}
+\toprule
+物体类别 & MeshLab & Ours w/o Repair & Ours \\
+\midrule
+Apple & 21.310 & 22.127 & \textbf{23.938} \\
+Bitter melon & 23.791 & 24.317 & \textbf{25.179} \\
+Banana & 23.882 & 24.001 & \textbf{24.030} \\
+Bagel & 26.105 & 26.854 & \textbf{28.766} \\
+Carrot & 26.288 & 26.335 & \textbf{28.967} \\
+Corn & 24.354 & 25.012 & \textbf{25.711} \\
+Sausage roll & 22.421 & 24.981 & \textbf{27.121} \\
+Fried chicken & 20.755 & 23.711 & \textbf{26.015} \\
+Ukulele & 21.952 & 21.968 & \textbf{24.913} \\
+Hamburg & 24.462 & 25.565 & \textbf{27.586} \\
+Lemon & 28.686 & 29.489 & \textbf{30.191} \\
+Luffa & 23.758 & 24.899 & \textbf{27.992} \\
+Mango & 20.626 & 20.746 & \textbf{21.844} \\
+Walnut & \textbf{21.679} & 20.020 & 20.973 \\
+Cepa & 26.490 & 26.797 & \textbf{28.786} \\
+Blue-and-white vase & 23.698 & 23.698 & \textbf{23.809} \\
+Celadon vase & 22.956 & 24.151 & \textbf{25.234} \\
+Pineapple & 13.425 & 16.492 & \textbf{18.517} \\
+Strawberry cream pastry & 16.824 & 20.046 & \textbf{21.237} \\
+Croissant & 21.718 & 24.068 & \textbf{26.238} \\
+Chocolate cake & 26.450 & 27.893 & \textbf{28.637} \\
+\midrule
+平均值 & 22.935 & 24.077 & \textbf{25.509} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+\subsection{局限性分析}
+\ensubsection{Limitations Analysis}
+
+尽管本章算法在透明物体表面提取、小物体几何重建以及纹理贴图生成等方面取得了较好的实验效果，但仍然存在一些局限性，有待在后续工作中进一步完善。
+
+(1)在透明物体表面提取方面，本章算法虽然能够较好地重建透明物体的几何网格，并在一定程度上缓解 NeuS 零等值面提取所带来的表面缺失问题，但其结果仍然存在一定的不稳定性。首先，由于透明区域对应的几何信号较弱，且后续网格法向通常依赖局部邻域自动估计，因此在部分区域仍可能出现法向方向翻转的问题，进而表现为局部黑面、明暗异常或表面朝向不一致。其次，本章算法仍然建立在多视图图像对隐式场的优化基础之上，当场景中存在较强的折射、高光反射或复杂环境光干扰时，透明物体的真实几何边界与图像观测之间的对应关系会进一步减弱，此时隐式场学习到的表面位置可能出现波动，从而影响最终提取结果的稳定性。因此，对于具有复杂光照条件的透明物体，本章算法的鲁棒性仍有提升空间。最后，本文实验主要验证了在 NeuS 框架下改进模块的有效性，尚未探索超越 NeuS 框架或结合其他先进透明物体重建方法的潜力。未来研究可在此基础上考虑多框架融合、物理光学建模或跨方法集成，以进一步提升透明物体的重建精度和鲁棒性。
+
+(2)在小物体重建加速方面，本章提出的学习态增强策略主要是在 NeuS 训练框架内，通过调节训练前期的几何收敛过程来提升有限训练预算下的小物体重建效率。然而，这一策略并未从根本上改变 NeuS 训练速度较慢的问题。相较之下，近年来以 Instant-NGP 为代表的高效神经表示算法\cite{muller2022instantngp,Li_2023_CVPR,Wang_2023_ICCV} ，通过多分辨率哈希编码等机制，显著提升了神经场的训练与查询效率，在保持较强表达能力的同时大幅缩短了优化时间。相比这类高效表示，本章算法仍然建立在较为传统的隐式场优化范式之上，因此在大规模数据处理、快速重建和交互式建模等应用场景中仍存在一定限制。未来可以考虑将本章针对小物体训练动态的改进思想，与 Instant-NGP 一类高效编码框架相结合，在保持几何细节恢复能力的同时进一步降低训练成本，从而实现更快、更稳定的小物体高保真重建。
+
+(3)在纹理贴图生成方面，本章构建的自动化算法能够将 NeuS 学得的隐式几何与颜色信息转换为主流渲染引擎可直接使用的显式资产，但这一过程本身不可避免地伴随着一定的信息损失。其根本原因在于，NeuS 算法采用的是连续隐式表示，颜色通常由空间位置与视角方向共同决定，能够在隐式场中保留较丰富的连续外观信息。而当其被转换为三角网格、固定 UV 坐标以及二维纹理贴图后，原始隐式表示中的连续性、视角相关性以及部分高频细节将被压缩到有限分辨率的显式表示中。这意味着从隐式场到显式纹理模型的转换并不是严格无损的表达映射，而是一种近似映射。因此，即使本章算法已经通过光栅化烘焙、形态学修复与 KNN 补全尽可能提升了纹理完整性，最终结果仍难以完全等价于原始隐式表示，不可避免地存在一定的纹理信息损失。未来可以考虑引入基于材质分解的显式表示、视角相关纹理建模，或采用隐式与显式混合表示，以进一步减小这一转换过程带来的纹理信息损失。
+
+\section{本章小结}
+\ensection{Summary}
+
+本章面向化学实验场景中透明物体、小物体难以高质量重建和机器人仿真平台对显式资产的需求，提出了一种基于隐式神经表面 NeuS 的高保真化学资产重建算法。围绕高保真化学资产重建这一目标，本章从数据预处理、隐式场训练、网格提取到纹理贴图生成，构建了一条完整的重建流程，为后续化学实验仿真、视觉感知与机器人操作提供可直接使用的三维资产。
+
+在算法上，本章首先设计了面向 NeuS 训练的数据预处理流程。通过多视图图像采集、COLMAP 相机位姿恢复、基于主体Mask的稀疏点云去噪以及空间归一化处理，建立了稳定的相机参数与坐标参考，为后续隐式场优化提供了可靠输入。在NeuS 网络中，本章围绕两个几何关键问题进行了针对性改进：一是在训练阶段，针对小物体训练初期监督信号稀疏、收敛缓慢的问题，提出学习态增强策略，以加速几何初始收敛并为后续细节学习预留更多有效迭代。二是在网格提取阶段，针对透明物体表面与零等值面不稳定对应的问题，采用基于绝对距离场局部极小值搜索的统一表面提取策略，以提高透明区域与不透明区域的几何恢复质量。进一步地，为满足下游仿真平台对显式资产的使用需求，本章构建了从 NeuS 隐式颜色场到高分辨率纹理贴图的自动化生成算法，利用 Xatlas 进行 UV 参数化，并结合光栅化烘焙、形态学修复与 KNN 补全，生成了适用于主流渲染引擎和仿真平台的纹理模型。
+
+实验结果表明，本章算法在几何与纹理两个层面均取得了较好的效果。在透明物体重建中，所提出的表面提取策略能够更完整地恢复器皿外轮廓，并减少内部伪影；在小物体重建中，学习态增强策略能够缩短过渡阶段并提升边缘与细节恢复能力；在纹理生成中，本章算法相比 MeshLab 等通用工具链能够有效减少纹理接缝、空洞与边缘锯齿，获得更加连续和平滑的表面外观。综上，本章提出的算法能够有效提升化学实验资产三维重建的保真度与工程可用性，为后续面向具身智能训练的高质量化学实验场景构建奠定了三维资产基础。
+

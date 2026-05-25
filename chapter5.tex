@@ -1,0 +1,299 @@
+%%==================================================
+%% chapter05.tex for Doctoral Thesis
+%% Chapter 5: From Manual to Robot Commands (restructured)
+%% (Two-level: structured step plan -> atomic execution)
+%%==================================================
+
+% !TeX root = ../main.tex
+
+\chapter{面向化学实验的具身智能任务规划}
+\enchapter[Embodied Task Planning for Chemistry Labs]{Embodied Task Planning for Chemical Experiments}
+\label{chap:robot_exec}
+
+化学实验任务中的实验手册通常以自然语言形式给出，如何将实验手册有效转化为机器人可执行的操作指令，是面向化学实验具身智能中的核心问题之一。为此，本章提出一种从实验手册文本到机器人操作指令的分层转化算法，通过步骤计划与操作原语的逐层映射，实现了从实验文本到机器人执行的端到端控制。
+
+首先，利用大语言模型对自然语言形式的实验手册进行解析，提取实验过程中的关键操作、涉及对象及其目标要求，并生成步骤计划。随后，结合预定义的机器人操作原语集合，将步骤计划进一步编译为仿真平台可调用的操作原语，从而建立从高层实验语义到机器人动作表示之间的映射；最后，本章在NVIDIA Omniverse仿真平台中构建化学实验执行环境，并通过典型反应案例展示以及操作原语生成质量与效率的定量实验，对所提分层转化算法进行了系统验证。实验结果表明，该算法能够较为准确地完成从实验手册文本到机器人操作序列的转化，并在可执行性与总体生成成本方面表现出较好的综合性能，为面向化学实验自动化的具身智能机器人系统提供了可行的任务规划框架。
+
+
+\section{引言}
+\ensection{Introduction}
+
+
+将化学实验步骤自动转化为机器人可执行的操作指令，是实现具身智能机器人自动化实验的重要基础。为了使机器人能够按照实验要求完成烧杯抓取、倾倒等操作，需要建立从实验手册文本到机器人动作序列之间的有效转化机制。化学实验手册通常包含严格的步骤依赖关系、多样的实验物体，以及具有专业性的操作语义，因此，如何准确解析实验说明并生成满足执行要求的机器人操作指令，是面向化学实验具身智能研究中的关键问题。
+
+随着机器人技术、大语言模型以及虚拟仿真技术的发展，机器人自动执行复杂任务已经成为人工智能与机器人学交叉研究的重要方向。对于化学实验场景而言，若机器人能够自动理解实验手册并完成规范操作，不仅能够降低人工实验的重复劳动与潜在风险，还能够为自动化实验平台、智能实验室以及数字化科研系统提供重要支撑。在这一背景下，研究从实验文本到机器人操作指令的自动转化算法，对于推动化学实验自动化与具身智能机器人落地具有重要意义。
+
+然而，在专业性较强的化学实验任务中，现有算法仍然面临明显局限。一方面，实验手册通常以面向人类的自然语言形式书写，其描述更强调实验目标与步骤逻辑，而非机器人执行所需的精确动作参数，因此难以直接作为底层控制输入。另一方面，即使利用大语言模型进行任务生成，若直接从文本输出操作原语序列，也容易受到语义歧义、步骤遗漏和接口不统一等问题的影响，难以保证生成结果的稳定性与可执行性。这种从高层实验语义到低层机器人控制之间的表示差异，正是化学实验机器人应用中的核心难点之一。
+
+针对上述问题，本章提出一种面向化学实验的机器人任务规划算法，其整体流程如图~\ref{fig:ch5_pipeline}所示，该算法采用实验手册文本—步骤计划—操作原语的分层表示思路，通过引入步骤计划这一中间层，实现从实验语义到机器人执行接口的逐层转化。具体而言，系统首先利用大语言模型从实验手册中分析出步骤计划，将实验过程表示为一组具有明确操作类型、涉及对象与目标要求的步骤描述。随后，基于预定义的操作原语集合，将这些中间层步骤计划映射为机器人可调用的操作原语，从而实现从高层实验语义到底层执行指令的有效转化。
+
+
+最后，为验证所提算法的有效性，本章在NVIDIA Omniverse仿真平台上构建了化学实验执行环境，并从案例展示、生成质量和生成效率三个方面对所提算法进行了系统实验分析。具体而言，本章首先以典型无机化学反应任务为例，展示从实验手册文本生成结构化步骤计划、再到操作原语序列执行的完整流程。随后，通过定量实验比较分层转化算法与直接生成算法在动作准确率、参数准确率、成功率以及总体生成成本等方面的差异。实验结果表明，所提算法能够较为准确地完成从实验手册文本到机器人操作序列的转化，并在可执行性与总体成本控制方面表现出较好的综合性能，为面向化学实验自动化的具身智能机器人系统提供了可行的任务规划框架。
+
+
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/ch5/pipeline.png}
+    \caption{面向化学实验的具身智能任务规划框架图。}
+    \label{fig:ch5_pipeline}
+\end{figure}
+
+\section{算法设计与实现}
+\ensection{Algorithm Design and Implementation}
+
+对于用户输入自然语言描述的实验协议文本 $T$，本章工作的目标是将其转化为机器人可自动执行的操作序列。由于化学实验协议通常具有明确的步骤顺序，并包含对象引用、操作条件和过程约束等信息，若直接从文本生成操作原语，容易出现步骤遗漏、对象绑定错误以及参数不一致等问题。因此，本章采用“先生成步骤计划、再由步骤计划生成操作原语”的逐层转化方式，实现从实验协议到机器人执行表示的映射：
+\[
+T \ \rightarrow \ P \ \rightarrow \ A .
+\]
+其中，$P$ 表示实验步骤计划，用于在高层描述实验任务的操作流程；$A$ 表示执行操作原语序列，用于将高层实验步骤进一步转化为机器人控制器可调用的离散操作接口。
+
+系统首先从文本 $T$ 中解析并生成步骤计划：
+\[
+P=\{p_1,p_2,\dots,p_k\},\qquad
+p_k=(\texttt{act},\ \texttt{src},\ \texttt{dst},\ \texttt{args}).
+\]
+其中，\texttt{act} 表示步骤类型，\texttt{src} 与 \texttt{dst} 分别表示该步骤涉及的源对象与目标对象标识，\texttt{args} 表示该步骤需要关注的状态参数，如液体体积、反应时长或目标温度等。步骤计划的核心作用是在自然语言语义层面对实验任务进行分解，强调步骤之间的先后关系、对象交互逻辑与关键参数约束，同时屏蔽仿真环境中的对象实例、控制器调用方式以及机器人底层实现细节，从而为后续操作原语生成提供清晰、稳定的中间表示。
+
+在获得步骤计划 $P$ 后，系统进一步将每个步骤 $p_k$ 分解为若干由系统预定义的执行原语，并按照执行顺序组合为
+\[
+A=\langle (m_1,\theta_1),(m_2,\theta_2),\dots,(m_n,\theta_n) \rangle ,
+\]
+原语集合定义为
+\[
+M=\{\mathtt{Pick},\ \mathtt{Place},\ \mathtt{Pour},\ \mathtt{Stir}\},\qquad m_n\in M.
+\]
+其中，$\theta_n$ 表示原语 $m_n$ 对应的参数集合，包含操作对象引用以及必要的物理约束参数。执行层 $A$ 将化学实验中的高层步骤映射为由有限原语构成的动作序列，并以统一的函数式接口形式提供给机器人控制系统。通过这种方式，大语言模型无需直接生成底层连续控制指令，即可借助原语级接口间接驱动机器人完成实验操作，同时也为后续运动规划与控制提供了规范一致的输入表示。
+
+为使上述操作原语能够被机器人系统稳定调用，本章进一步对每类原语的执行过程进行统一封装。各原语的具体执行逻辑如下：
+
+\begin{enumerate}[nosep]
+\item \textbf{Pick}: 用于完成对目标容器的抓取准备与抓取执行，具体执行流程为：机械臂首先运动至目标物体上方的安全高度，随后沿竖直方向下探至抓取位置，在短暂停留以减小末端抖动后闭合夹爪，并最终将目标物体抬升至预设高度。 
+\item \textbf{Place}: 用于将已抓取的容器摆放到指定位置。具体执行流程为：机械臂先从当前操作位置移动至目标区域上方，再沿竖直方向下降至放置高度，随后张开夹爪摆放物体，并将末端抬回安全高度。 
+\item \textbf{Pour}: 用于执行容器间可倾倒物质的转移操作，主要包括液体以及可通过倾倒完成转移的颗粒状固体。具体执行流程为：首先驱动末端关节按给定速度向倾倒方向旋转，使源容器产生倾角；随后在目标倾倒位置处短暂停留；最后控制关节反向旋转，使容器恢复到初始位置。 
+\item \textbf{Stir}: 用于表示容器内部的连续搅拌过程，具体执行流程为：该原语通过控制末端执行器在固定高度平面内围绕给定中心做圆周运动，从而实现稳定的循环搅拌。
+\end{enumerate}
+
+\section{实验结果与分析}
+\ensection{Experimental Results and Analysis}
+\label{sec:ch5_results_analysis}
+
+\subsection{实验设置}
+\ensubsection{Experimental Setup}
+
+在数据集方面，本章从网络公开资料中整理了 20 条经典化学实验指导文本，涵盖氧化还原反应、酸碱中和反应等典型任务，并由人工标注为本章所需的数据格式。对于每条样本，数据中均包含自然语言实验描述、以及对应的标准操作原语序列，用于支持后续生成结果的定量评测。
+
+在实验设置方面，所有实验均在基于 NVIDIA Omniverse ~\cite{nvidia2026isaacsim} 的机器人仿真平台上完成，以保证实验对象、场景状态和控制接口的一致性。系统底层采用统一的操作原语集合与对象表示方式，原语类型包括 \texttt{Pick}、\texttt{Place}、\texttt{Pour}和 \texttt{Stir} 。实验中使用的大语言模型为 GPT-5.2。在此基础上，本章比较两种生成方式：一种为 \textbf{Single-Stage T$\rightarrow$A}，即直接从实验手册文本生成操作原语序列；另一种为 \textbf{Ours T$\rightarrow$P$\rightarrow$A}，即先将实验描述解析为结构化步骤计划，再将步骤计划编译为操作原语序列。为了保证比较公平，两种算法在相同的任务输入、对象集合、原语集合以及控制器接口约束下进行评测，差异仅在于是否显式引入中间步骤计划。
+
+在定量实验中，本章采用动作准确率、参数准确率和成功率这三个指标进行质量评测。同时在效率评测中，考虑到面向机器人执行的任务编译不仅关注单次生成代价，还关注获得可用结果所需的总体开销，本章进一步在统一最大重试次数 $K=3$ 的预算下，统计两种算法的单次耗时、单次开销、累计耗时以及累计开销。对于在 3 次尝试内仍未生成可用结果的样本，其累计成本按 3 次尝试的总和计算。
+
+  
+\subsection{无机化学反应样例}
+\ensubsection{Inorganic Chemistry Reaction Case Study}
+\label{sec:ch5_inorg_case_hcl_feo}
+本节以盐酸（HCl）与氧化亚铁（FeO）的反应作为典型案例，详细演示从自然语言指令到机器人操作序列的生成与执行能力。该反应的化学方程式为：
+\[
+\mathrm{FeO} + 2\mathrm{HCl} \rightarrow \mathrm{FeCl_2} + \mathrm{H_2O}.
+\]
+
+
+当系统接收到的实验指令“进行盐酸和氧化亚铁的反应”后，首先生成步骤计划如表\ref{tab:hcl_feo_plan}所示，算法将复杂的化学反应拆解为一系列具有逻辑先后关系的步骤计划。
+\begin{table}[htbp]
+\centering
+\caption{盐酸与氧化亚铁反应的步骤计划示例}
+\label{tab:hcl_feo_plan}
+\begin{tabular}{c c c c c}
+\toprule
+步骤 & 操作类型 & 源对象 & 目标对象 & 参数 \\
+\midrule
+$p_1$ & AddLiquid & Bottle\_HCl & Beaker\_1 & volume=20\,mL, conc=1\,mol/L \\
+$p_2$ & Return    & Bottle\_HCl & -- & -- \\
+$p_3$ & AddSolid  & Jar\_FeO    & Beaker\_1 & mass=1.0\,g \\
+$p_4$ & Return    & Jar\_FeO    & -- & -- \\
+$p_5$ & Mix       & StirRod\_1  & Beaker\_1 & method=stir, duration=180\,s \\
+$p_6$ & Return    & StirRod\_1  & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+然而，上述步骤计划仍属于中间层语义描述，无法直接对接底层的机器人仿真平台。因此在获得 $P$ 后，将每个步骤通过大语言模型分解为操作原语并串联为表~\ref{tab:hcl_feo_atomic_actions} 所示的执行序列。
+
+\begin{table}[htbp]
+\centering
+\caption{盐酸与氧化亚铁反应的操作原语序列示例}
+\label{tab:hcl_feo_atomic_actions}
+\small
+\begin{tabular}{c c p{10.4cm}}
+\toprule
+步骤 & 执行原语 & 参数 \\
+\midrule
+$a_1$ & \texttt{Pick} &
+\{\texttt{object}=\texttt{Bottle\_HCl}, \texttt{approach\_height}=$h_{\mathrm{safe}}$, \texttt{grasp\_height}=$h_{\mathrm{grasp}}^{\mathrm{HCl}}$, \texttt{dwell\_time}=$t_{\mathrm{pick}}$, \texttt{lift\_height}=$h_{\mathrm{safe}}$\} \\
+
+$a_2$ & \texttt{Pour} &
+\{\texttt{source}=\texttt{Bottle\_HCl}, \texttt{target}=\texttt{Beaker\_1}, \texttt{volume}=$20\,\mathrm{mL}$, \texttt{align\_height}=$h_{\mathrm{pour}}$, \texttt{pour\_angle}=$\alpha_{\mathrm{HCl}}$, \texttt{rotate\_speed}=$\omega_{\mathrm{pour}}^{\mathrm{HCl}}$, \texttt{hold\_time}=$t_{\mathrm{hold}}^{\mathrm{HCl}}$\} \\
+
+$a_3$ & \texttt{Place} &
+\{\texttt{object}=\texttt{Bottle\_HCl}, \texttt{target\_pose}=\texttt{Bottle\_HCl\_Home}, \texttt{approach\_height}=$h_{\mathrm{safe}}$, \texttt{place\_height}=$h_{\mathrm{place}}^{\mathrm{HCl}}$, \texttt{retreat\_height}=$h_{\mathrm{safe}}$\} \\
+
+$a_4$ & \texttt{Pick} &
+\{\texttt{object}=\texttt{Jar\_FeO}, \texttt{approach\_height}=$h_{\mathrm{safe}}$, \texttt{grasp\_height}=$h_{\mathrm{grasp}}^{\mathrm{FeO}}$, \texttt{dwell\_time}=$t_{\mathrm{pick}}$, \texttt{lift\_height}=$h_{\mathrm{safe}}$\} \\
+
+$a_5$ & \texttt{Pour} &
+\{\texttt{source}=\texttt{Jar\_FeO}, \texttt{target}=\texttt{Beaker\_1}, \texttt{mass}=$1.0\,\mathrm{g}$, \texttt{align\_height}=$h_{\mathrm{pour}}$, \texttt{pour\_angle}=$\alpha_{\mathrm{FeO}}$, \texttt{rotate\_speed}=$\omega_{\mathrm{pour}}^{\mathrm{FeO}}$, \texttt{hold\_time}=$t_{\mathrm{hold}}^{\mathrm{FeO}}$, \texttt{tap\_count}=$n_{\mathrm{tap}}$\} \\
+
+$a_6$ & \texttt{Place} &
+\{\texttt{object}=\texttt{Jar\_FeO}, \texttt{target\_pose}=\texttt{Jar\_FeO\_Home}, \texttt{approach\_height}=$h_{\mathrm{safe}}$, \texttt{place\_height}=$h_{\mathrm{place}}^{\mathrm{FeO}}$, \texttt{retreat\_height}=$h_{\mathrm{safe}}$\} \\
+
+$a_7$ & \texttt{Pick} &
+\{\texttt{object}=\texttt{StirRod\_1}, \texttt{approach\_height}=$h_{\mathrm{safe}}$, \texttt{grasp\_height}=$h_{\mathrm{grasp}}^{\mathrm{stir}}$, \texttt{dwell\_time}=$t_{\mathrm{pick}}$, \texttt{lift\_height}=$h_{\mathrm{safe}}$\} \\
+
+$a_8$ & \texttt{Stir} &
+\{\texttt{vessel}=\texttt{Beaker\_1}, \texttt{center}=\texttt{Beaker\_1\_Center}, \texttt{plane\_height}=$h_{\mathrm{stir}}$, \texttt{radius}=$r_{\mathrm{stir}}$, \texttt{angular\_speed}=$\omega_{\mathrm{stir}}$, \texttt{duration}=$180\,\mathrm{s}$\} \\
+
+$a_9$ & \texttt{Place} &
+\{\texttt{object}=\texttt{StirRod\_1}, \texttt{target\_pose}=\texttt{StirRod\_1\_Home}, \texttt{approach\_height}=$h_{\mathrm{safe}}$, \texttt{place\_height}=$h_{\mathrm{place}}^{\mathrm{stir}}$, \texttt{retreat\_height}=$h_{\mathrm{safe}}$\} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+在该操作原语序列中，每个操作原语都有明确的控制参数，这些参数可分为两类：一类是系统预设的通用控制参数，用于保证执行过程的统一性与安全性，例如安全接近高度 $h_{\mathrm{safe}}$、倾倒对准高度 $h_{\mathrm{pour}}$、抓取停留时间 $t_{\mathrm{pick}}$ 以及搅拌持续时间等。另一类是与具体操作对象相关的实例化参数，其取值由容器类型及任务需求共同决定，例如抓取高度 $h_{\mathrm{grasp}}^{\mathrm{HCl}}$、倾倒角速度 $\omega_{\mathrm{pour}}^{\mathrm{HCl}}$、搅拌半径 $r_{\mathrm{stir}}$等。通过这种方式，步骤计划中“AddLiquid、AddSolid、Stir、Return”等语义可被进一步细化为具有明确参数约束的操作原语，从而实现从高层实验语义到低层机器人控制的有效转化。
+
+
+\begin{figure*}[!t]
+\centering
+\begin{tikzpicture}[
+    node distance=0.38cm and 0.48cm,
+    img/.style={inner sep=0pt, outer sep=0pt},
+    flow/.style={
+        -{Latex[length=1.6mm,width=1.4mm]},
+        line width=0.7pt,
+        shorten >=1pt,
+        shorten <=1pt
+    }
+]
+
+% 第一行：1 2 3
+\node[img] (s1)  {\includegraphics[width=0.285\textwidth]{figures/ch5/demo_1}};
+\node[img, right=of s1] (s2)  {\includegraphics[width=0.285\textwidth]{figures/ch5/demo_2}};
+\node[img, right=of s2] (s3)  {\includegraphics[width=0.285\textwidth]{figures/ch5/demo_3}};
+
+% 第二行：6 5 4
+\node[img, below=of s1] (s6)  {\includegraphics[width=0.285\textwidth]{figures/ch5/demo_6}};
+\node[img, right=of s6] (s5)  {\includegraphics[width=0.285\textwidth]{figures/ch5/demo_5}};
+\node[img, right=of s5] (s4)  {\includegraphics[width=0.285\textwidth]{figures/ch5/demo_4}};
+
+% 第三行：7 8 9
+\node[img, below=of s6] (s7)  {\includegraphics[width=0.285\textwidth]{figures/ch5/demo_7}};
+\node[img, right=of s7] (s8)  {\includegraphics[width=0.285\textwidth]{figures/ch5/demo_8}};
+\node[img, right=of s8] (s9)  {\includegraphics[width=0.285\textwidth]{figures/ch5/demo_9}};
+
+% 第四行：12 11 10
+\node[img, below=of s7] (s12) {\includegraphics[width=0.285\textwidth]{figures/ch5/demo_12}};
+\node[img, right=of s12] (s11) {\includegraphics[width=0.285\textwidth]{figures/ch5/demo_11}};
+\node[img, right=of s11] (s10) {\includegraphics[width=0.285\textwidth]{figures/ch5/demo_10}};
+
+% 箭头顺序：1 -> 12
+\draw[flow] (s1.east) -- (s2.west);
+\draw[flow] (s2.east) -- (s3.west);
+
+\draw[flow] (s3.south) -- (s4.north);
+
+\draw[flow] (s4.west) -- (s5.east);
+\draw[flow] (s5.west) -- (s6.east);
+
+\draw[flow] (s6.south) -- (s7.north);
+
+\draw[flow] (s7.east) -- (s8.west);
+\draw[flow] (s8.east) -- (s9.west);
+
+\draw[flow] (s9.south) -- (s10.north);
+
+\draw[flow] (s10.west) -- (s11.east);
+\draw[flow] (s11.west) -- (s12.east);
+
+\end{tikzpicture}
+\caption{盐酸与氧化亚铁反应的仿真平台执行示例}
+\label{fig:hcl_feo_demo_sequence}
+\end{figure*}
+
+最后，操作原语序列 $A$ 控制着机械臂在仿真环境中完成对应的操作，如图~\ref{fig:hcl_feo_demo_sequence}所示，展示了 FeO 与 HCl 反应任务中部分关键操作步骤的可视化结果。通过该实验案例，本章验证了所提算法在从自然语言实验描述到机器人操作序列的转化与执行能力。
+
+
+\subsection{操作原语生成质量分析}
+\ensubsection{Quality Analysis of Primitive Action Generation}
+
+表~\ref{tab:ch5_ablation_tpa} 对比了两种生成方式在语义动作准确率、语义参数准确率和成功率三个指标上的表现。两种生成方式分别为 Single-Stage（$T \rightarrow A$）和 Ours（$T \rightarrow P \rightarrow A$）。结果分析可得，引入中间步骤计划后，系统在三个指标上均取得了明显提升。在动作准确率 AA 上，Single-Stage 的结果为 0.78，而 Ours 提升至 0.96，表明引入抽象的步骤计划能够有效缓解自然语言直接映射到原语序列时的语义不精确问题，使模型在动作类型选择、对象引用以及源目标关系组织上更加稳定。
+
+在语义参数准确率 PA 上，Single-Stage 的结果为 0.86，而 Ours 达到 0.98。这表明分层生成方式能够更稳定地提取并保留实验描述中的关键参数信息，例如体积、质量和持续时间等。相比直接生成方式，先生成步骤计划再生成操作原语，有助于减少参数遗漏、参数错配以及字段绑定错误等问题。
+
+在成功率 SR 上，Single-Stage 的结果为 0.70，而 Ours 达到 0.85。该结果表明，直接生成方式在部分简单协议上可以得到可用结果，但在复杂协议中，仍然容易受到步骤结构不稳定、字段组织不完整以及长链依赖错误的影响。相比之下，中间步骤计划的引入增强了生成结果的结构性和约束一致性，使最终动作序列更接近机器人控制接口所要求的输入形式。
+
+
+\begin{table}[htbp]
+\centering
+\caption{不同生成算法对操作原语的生成质量对比}
+\label{tab:ch5_ablation_tpa}
+\small
+\setlength{\tabcolsep}{8pt}
+\begin{tabular}{lccc}
+\toprule
+算法 & AA $\uparrow$ & PA $\uparrow$ & SR $\uparrow$ \\
+\midrule
+Single-Stage & 0.78 & 0.86 & 0.70 \\
+Ours & \textbf{0.96} & \textbf{0.98} & \textbf{0.85} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+\subsection{操作原语生成效率分析}
+\ensubsection{Efficiency Analysis of Primitive Action Generation}
+
+除了生成质量之外，本章还进一步比较了两种算法在统一重试预算下的生成成本。对于面向具身智能机器人执行任务问题，仅考察单次成本并不能准确反映实际效率，还需要考虑生成失败重试到成功的情况。因此，本章在最大重试次数 $K=3$ 下，对两种算法的单次成本与累计成本进行比较。
+
+具体而言，本章统计四项指标：单次耗时、单次开销、累计耗时和累计开销。其中，单次耗时和单次开销分别表示每个样本首次生成时的平均耗时与平均 Tokens 数（输入与输出之和）。累计耗时和累计开销表示在最多重试3次的情况下，为获得可用结果所需的累计成本，若样本在 3 次尝试内仍未获得可用结果，则其累计成本记为 3 次尝试的总开销。表~\ref{tab:ch5_efficiency_cost} 给出了对应结果。
+
+\begin{table}[htbp]
+\centering
+\caption{不同生成算法对操作原语的生成成本对比}
+\label{tab:ch5_efficiency_cost}
+\small
+\setlength{\tabcolsep}{8pt}
+\begin{tabular}{lcccc}
+\toprule
+算法 & 单次耗时$\downarrow$(s)  & 单次开销$\downarrow$(Tokens) & 累计耗时$\downarrow$(s)& 累计开销$\downarrow$(Tokens)  \\
+\midrule
+Single-Stage & \textbf{48.98} & \textbf{4023.6} & 90.82 & 7638.9 \\
+Ours & 61.17 & 4751.4 & \textbf{79.52} & \textbf{6176.8} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+由表~\ref{tab:ch5_efficiency_cost} 结果分析出，分层算法在单次生成阶段带来了更高开销：其单次平均时间由 48.98\,s 增加到 61.17\,s，单次平均 Tokens 由 4023.6 增加到 4751.4。这是因为本章算法 T$\rightarrow$P$\rightarrow$A 需要额外引入步骤计划这一中间表示，并完成两阶段语义编译。
+
+然而，在累计开销指标上，两种算法之间的差异明显缩小。Single-Stage 的累计耗时为 90.82\,s，累计开销为 7638.9；而 Ours 分别为 79.52\,s 和 6176.8，整体仍低于直接生成方式。这表明更高的单次开销并没有转化为更高的总体成本，反而通过提升成功率降低了重复调用带来的额外消耗。
+
+综合来看，分层算法虽然在单次推理上引入了额外成本，但在统一重试预算下，依然保持了更低的耗时与 Tokens 消耗。这表明中间步骤计划带来的额外开销并非无效成本，而是换来了更高的成功率和更稳定的结构化输出。
+
+
+\subsection{局限性分析}
+\ensubsection{Limitations Analysis}
+
+尽管本章提出的算法在一定程度上实现了从化学实验手册文本到操作原语序列的自动转化，并在仿真环境中验证了其可执行性与有效性，但该算法仍存在一定的局限性和进一步改进空间。首先，本章当前构建的原语集合仅包含 \texttt{Pick}、\texttt{Place}、\texttt{Pour} 和 \texttt{Stir} 四类基础操作，因此算法的适用范围主要限于以容器取放、物质转移为主的基础实验流程，对于加热、冷却等复杂操作尚未涵盖。其次，当前仿真平台对于液体行为和粒子特效的支持仍然有限，对于倾倒、搅拌、沉淀、颜色变化等与化学实验密切相关的动态过程，尚难以实现高保真的物理模拟与真实呈现。因此，本章实验更多验证的是机器人操作序列在接口层和流程层面的可行性，而对于实验过程中复杂物质变化的还原仍然不足。
+
+此外，本章目前的验证范围主要局限于仿真环境，尚未进一步拓展到真实机器人平台。虽然仿真环境能够为算法设计、流程验证与算法评估提供高效且安全的实验条件，但仿真系统中的感知精度、物体属性、动力学响应与真实世界之间仍然存在差异。在真实实验场景中，机器人还需要进一步面对视觉噪声、位姿估计误差、抓取偏差、控制延迟以及安全约束等一系列更加复杂的问题。因此，如何进一步缩小仿真与现实之间的差距，并将本章算法扩展到真实机器人执行场景，仍然是后续研究中需要重点解决的问题。此外，本文异常检测机制主要面向仿真环境中的格式一致性、参数完整性和接口可执行性检查，尚未覆盖真实高危化学实验所需的物理级安全防护。对于真实机器人系统，仍需进一步引入独立于大语言模型的安全约束层，通过硬件急停、传感器冗余、重量与液位检测以及设备互锁机制，避免模型逻辑幻觉直接转化为危险操作。
+
+
+\section{本章小结}
+\ensection{Summary}
+\label{sec:ch5_summary}
+
+本章围绕化学实验手册到机器人可执行操作指令的自动转化问题，研究了从自然语言实验描述到操作原语序列的分层生成算法。针对化学实验任务中步骤依赖关系明确、涉及对象类型多样、操作语义专业性强，以及自然语言描述难以直接对接机器人执行接口等问题，本章提出了一种“实验手册文本—步骤计划—操作原语”的分层转化框架。该框架通过引入步骤计划这一中间表示，在高层实验语义与底层机器人执行指令之间建立了清晰的逐层映射关系，为基础化学实验任务的自动化执行提供了结构化表示基础。
+
+在算法上，本章首先利用大语言模型对自然语言形式的实验手册进行解析，提取实验过程中的关键操作、涉及对象及其目标要求，并生成结构化步骤计划；随后，基于预定义的操作原语集合，将高层步骤进一步编译为机器人可调用的操作原语序列。本章围绕化学实验中的典型操作，构建了 \texttt{Pick}、\texttt{Place}、\texttt{Pour} 和 \texttt{Stir} 四类操作原语，并对其执行过程进行了统一封装。通过这种方式，系统无需直接从自然语言生成底层连续控制信号，即可实现从实验文本到机器人执行表示的有效转化，同时提高了输出结果的结构一致性、可解释性与可复用性。
+
+实验结果表明，本章所提出的分层转化算法能够较好地完成从实验手册到操作原语序列的生成，并在NVIDIA Omniverse仿真平台中验证了完整执行链路的可行性。以盐酸与氧化亚铁反应任务为例，系统能够根据自然语言输入生成结构化步骤计划，并进一步映射为机器人可执行的操作原语序列，从而完成典型化学实验操作流程。在定量评测中，相较于直接从文本生成操作原语序列的方式，本章算法在动作准确率、参数准确率和成功率上均取得了更优表现；同时，尽管分层生成在单次调用时引入了额外开销，但在统一重试预算下，其累计耗时与累计开销仍低于直接生成方式，表明中间步骤计划不仅提升了生成质量，也改善了整体执行效率。
+
+综上所述，本章工作为面向化学实验的具身智能机器人应用提供了一种可行任务规划框架，验证了通过分层表示连接实验语义理解与机器人动作执行的有效性，也为后续研究更复杂实验流程、更多类型操作原语以及结合环境反馈的闭环执行算法奠定了基础。

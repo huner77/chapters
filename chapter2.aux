@@ -1,0 +1,178 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\citation{vaswani2017attention}
+\citation{elman1990finding}
+\citation{lecun1998gradient}
+\citation{vaswani2017attention}
+\citation{vaswani2017attention}
+\pp@pagectr{footnote}{2}{35}{10}
+\@writefile{toc}{\contentsline {chapter}{\numberline {第2章\hspace  {.3em}}理论基础}{10}{chapter.2}\protected@file@percent }
+\@writefile{lof}{\addvspace {10.0pt}}
+\@writefile{lot}{\addvspace {10.0pt}}
+\@writefile{etoc}{\contentsline {chapter} {\numberline {\sffamily  Chapter 2}Theoretical Background} {10}{chapter.2}}
+\newlabel{chap:theory}{{2}{10}{理论基础}{chapter.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.1}大语言模型基础}{10}{section.2.1}\protected@file@percent }
+\@writefile{etoc}{\contentsline {section} {\numberline {\sffamily  2.1}Theoretical Foundations of Large Language Models} {10}{section.2.1}}
+\newlabel{sec:llm_foundation}{{2.1}{10}{大语言模型基础}{section.2.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.1}Transformer网络}{10}{subsection.2.1.1}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {2.1.1}Transformer}{10}{subsection.2.1.1}\protected@file@percent }
+\newlabel{sec:transformer}{{2.1.1}{10}{Transformer网络}{subsection.2.1.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2.1}{\ignorespaces Transformer 网络架构图\cite  {vaswani2017attention}。编码器由多头自注意力与前馈网络堆叠组成，解码器在此基础上增加掩码多头注意力以及编码器--解码器注意力模块。}}{11}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:transformer_architecture}{{2.1}{11}{Transformer 网络架构图\cite {vaswani2017attention}。编码器由多头自注意力与前馈网络堆叠组成，解码器在此基础上增加掩码多头注意力以及编码器--解码器注意力模块。}{figure.caption.9}{}}
+\newlabel{eq:transformer_attention}{{2-3}{11}{Transformer网络}{equation.2.3}{}}
+\citation{vaswani2017attention}
+\newlabel{eq:transformer_multihead}{{2-5}{12}{Transformer网络}{equation.2.5}{}}
+\newlabel{eq:transformer_ffn}{{2-6}{12}{Transformer网络}{equation.2.6}{}}
+\newlabel{eq:transformer_residual}{{2-7}{12}{Transformer网络}{equation.2.7}{}}
+\newlabel{eq:transformer_pe}{{2-9}{12}{Transformer网络}{equation.2.9}{}}
+\citation{brown2020gpt3}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.2}提示工程}{13}{subsection.2.1.2}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {2.1.2}Prompt Engineering}{13}{subsection.2.1.2}\protected@file@percent }
+\newlabel{sec:prompt_engineering}{{2.1.2}{13}{提示工程}{subsection.2.1.2}{}}
+\citation{wei2022chainofthought}
+\citation{kojima2022large}
+\citation{kojima2022large}
+\citation{kojima2022large}
+\citation{holland1992adaptation}
+\@writefile{lof}{\contentsline {figure}{\numberline {2.2}{\ignorespaces 标准提示、Few-shot-CoT 提示与Zero-shot-CoT 提示的对比图。对于同一问题，传统 Few-shot 与 Zero-shot 提示均倾向于直接生成最终答案，容易出现错误。而在提示中显式加入中间推理过程，或通过“Let’s think step by step”诱导模型进行分步推理后，模型能够生成更合理的推理链并得到正确结果。图片来源于 Zero-shot-CoT \cite  {kojima2022large}。}}{15}{figure.caption.10}\protected@file@percent }
+\newlabel{fig:zero_shot_cot}{{2.2}{15}{标准提示、Few-shot-CoT 提示与Zero-shot-CoT 提示的对比图。对于同一问题，传统 Few-shot 与 Zero-shot 提示均倾向于直接生成最终答案，容易出现错误。而在提示中显式加入中间推理过程，或通过“Let’s think step by step”诱导模型进行分步推理后，模型能够生成更合理的推理链并得到正确结果。图片来源于 Zero-shot-CoT \cite {kojima2022large}。}{figure.caption.10}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.2}遗传算法}{15}{section.2.2}\protected@file@percent }
+\@writefile{etoc}{\contentsline {section} {\numberline {\sffamily  2.2}Genetic Algorithm} {15}{section.2.2}}
+\newlabel{sec:genetic_algorithm}{{2.2}{15}{遗传算法}{section.2.2}{}}
+\newlabel{eq:ga_individual}{{2-10}{15}{遗传算法}{equation.2.10}{}}
+\newlabel{eq:ga_binary_encoding}{{2-11}{16}{遗传算法}{equation.2.11}{}}
+\newlabel{eq:ga_population}{{2-12}{16}{遗传算法}{equation.2.12}{}}
+\newlabel{eq:ga_fitness}{{2-13}{16}{遗传算法}{equation.2.13}{}}
+\newlabel{eq:ga_selection_probability}{{2-14}{16}{遗传算法}{equation.2.14}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2.3}{\ignorespaces 遗传算法的流程图。算法从创建初始种群开始，经过适应度评估、选择、交叉和变异不断更新种群，并在满足终止条件后输出当前最优个体。}}{17}{figure.caption.11}\protected@file@percent }
+\newlabel{fig:ga_pipeline}{{2.3}{17}{遗传算法的流程图。算法从创建初始种群开始，经过适应度评估、选择、交叉和变异不断更新种群，并在满足终止条件后输出当前最优个体。}{figure.caption.11}{}}
+\newlabel{eq:ga_parents}{{2-15}{17}{遗传算法}{equation.2.15}{}}
+\newlabel{eq:ga_offspring}{{2-16}{17}{遗传算法}{equation.2.16}{}}
+\newlabel{eq:ga_mutation}{{2-17}{18}{遗传算法}{equation.2.17}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2.4}{\ignorespaces 遗传算法中交叉与变异操作图。交叉通过交换两个父代个体的局部基因片段生成新个体，变异通过随机修改局部基因位生成新个体。}}{18}{figure.caption.12}\protected@file@percent }
+\newlabel{fig:ga_crossover_and_mutate}{{2.4}{18}{遗传算法中交叉与变异操作图。交叉通过交换两个父代个体的局部基因片段生成新个体，变异通过随机修改局部基因位生成新个体。}{figure.caption.12}{}}
+\newlabel{eq:ga_evolution_chain}{{2-18}{18}{遗传算法}{equation.2.18}{}}
+\citation{mildenhall2020nerf}
+\newlabel{eq:ga_schema}{{2-19}{19}{遗传算法}{equation.2.19}{}}
+\newlabel{eq:ga_schema_theorem}{{2-20}{19}{遗传算法}{equation.2.20}{}}
+\citation{mildenhall2020nerf}
+\citation{mildenhall2020nerf}
+\@writefile{toc}{\contentsline {section}{\numberline {2.3}神经隐式场基础}{20}{section.2.3}\protected@file@percent }
+\@writefile{etoc}{\contentsline {section} {\numberline {\sffamily  2.3}Neural Implicit Field Foundations} {20}{section.2.3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3.1}神经辐射场}{20}{subsection.2.3.1}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {2.3.1}Neural Radiance Fields}{20}{subsection.2.3.1}\protected@file@percent }
+\newlabel{sec:nerf}{{2.3.1}{20}{神经辐射场}{subsection.2.3.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2.5}{\ignorespaces NeRF 算法框架图\cite  {mildenhall2020nerf}。以空间位置和观察方向作为输入，通过多层感知机预测颜色与体积密度，并结合体渲染过程生成像素颜色，再利用渲染结果与真实图像之间的误差进行监督优化。}}{20}{figure.caption.13}\protected@file@percent }
+\newlabel{fig:nerf_framework}{{2.5}{20}{NeRF 算法框架图\cite {mildenhall2020nerf}。以空间位置和观察方向作为输入，通过多层感知机预测颜色与体积密度，并结合体渲染过程生成像素颜色，再利用渲染结果与真实图像之间的误差进行监督优化。}{figure.caption.13}{}}
+\newlabel{eq:nerf_function}{{2-21}{20}{神经辐射场}{equation.2.21}{}}
+\newlabel{eq:nerf_pe}{{2-22}{21}{神经辐射场}{equation.2.22}{}}
+\newlabel{eq:nerf_ray}{{2-23}{21}{神经辐射场}{equation.2.23}{}}
+\newlabel{eq:nerf_render_continuous}{{2-24}{21}{神经辐射场}{equation.2.24}{}}
+\newlabel{eq:nerf_transmittance}{{2-25}{21}{神经辐射场}{equation.2.25}{}}
+\newlabel{eq:nerf_render_discrete}{{2-26}{21}{神经辐射场}{equation.2.26}{}}
+\newlabel{eq:nerf_alpha_t}{{2-27}{21}{神经辐射场}{equation.2.27}{}}
+\newlabel{eq:nerf_loss}{{2-28}{21}{神经辐射场}{equation.2.28}{}}
+\citation{wang2021neus}
+\citation{frisken2000adf}
+\citation{wang2021neus}
+\citation{wang2021neus}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3.2}神经隐式表面重建}{22}{subsection.2.3.2}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {2.3.2}NeuS}{22}{subsection.2.3.2}\protected@file@percent }
+\newlabel{sec:neus}{{2.3.2}{22}{神经隐式表面重建}{subsection.2.3.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2.6}{\ignorespaces 表面渲染与体渲染的对比图\cite  {wang2021neus}。表面渲染仅依赖射线与表面的交点，而体渲染沿射线对多个采样点进行颜色累积。}}{22}{figure.caption.14}\protected@file@percent }
+\newlabel{fig:surface_and_volume_rendering}{{2.6}{22}{表面渲染与体渲染的对比图\cite {wang2021neus}。表面渲染仅依赖射线与表面的交点，而体渲染沿射线对多个采样点进行颜色累积。}{figure.caption.14}{}}
+\newlabel{eq:neus_surface}{{2-29}{22}{神经隐式表面重建}{equation.2.29}{}}
+\citation{wang2021neus}
+\citation{wang2021neus}
+\newlabel{eq:neus_sigmoid}{{2-30}{23}{神经隐式表面重建}{equation.2.30}{}}
+\newlabel{eq:neus_ray}{{2-31}{23}{神经隐式表面重建}{equation.2.31}{}}
+\newlabel{eq:neus_render}{{2-32}{23}{神经隐式表面重建}{equation.2.32}{}}
+\newlabel{eq:neus_weight}{{2-33}{23}{神经隐式表面重建}{equation.2.33}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2.7}{\ignorespaces 朴素体渲染方案与 NeuS 无偏体渲染对比图\cite  {wang2021neus}。朴素体渲染公式会使权重峰值偏离真实表面位置，而 NeuS 通过重新构造不透明度密度，使权重函数在一阶近似下能够更准确地对齐于目标表面。}}{24}{figure.caption.15}\protected@file@percent }
+\newlabel{fig:neus_and_naive_solution_bias}{{2.7}{24}{朴素体渲染方案与 NeuS 无偏体渲染对比图\cite {wang2021neus}。朴素体渲染公式会使权重峰值偏离真实表面位置，而 NeuS 通过重新构造不透明度密度，使权重函数在一阶近似下能够更准确地对齐于目标表面。}{figure.caption.15}{}}
+\newlabel{eq:neus_transmittance}{{2-34}{24}{神经隐式表面重建}{equation.2.34}{}}
+\newlabel{eq:neus_opacity_density}{{2-35}{24}{神经隐式表面重建}{equation.2.35}{}}
+\newlabel{eq:neus_discrete_render}{{2-36}{24}{神经隐式表面重建}{equation.2.36}{}}
+\newlabel{eq:neus_alpha}{{2-37}{24}{神经隐式表面重建}{equation.2.37}{}}
+\citation{hessel2021clipscore}
+\citation{radford2021learning}
+\newlabel{eq:neus_total_loss}{{2-38}{25}{神经隐式表面重建}{equation.2.38}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.4}评价指标}{25}{section.2.4}\protected@file@percent }
+\@writefile{etoc}{\contentsline {section} {\numberline {\sffamily  2.4}Evaluation Metrics} {25}{section.2.4}}
+\newlabel{sec:evaluation_metrics}{{2.4}{25}{评价指标}{section.2.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.1}场景生成评价指标}{25}{subsection.2.4.1}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {2.4.1}Scene Generation Metrics}{25}{subsection.2.4.1}\protected@file@percent }
+\newlabel{eq:clip_feature}{{2-39}{25}{场景生成评价指标}{equation.2.39}{}}
+\newlabel{eq:clipscore}{{2-40}{25}{场景生成评价指标}{equation.2.40}{}}
+\citation{lin2024instructscene,bai2025freescene}
+\newlabel{eq:key_object_coverage}{{2-41}{26}{场景生成评价指标}{equation.2.41}{}}
+\citation{huynhthu2008psnr}
+\citation{wang2004ssim}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.2}三维重建评价指标}{27}{subsection.2.4.2}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {2.4.2}3D Reconstruction Metrics}{27}{subsection.2.4.2}\protected@file@percent }
+\newlabel{eq:psnr_mse}{{2-42}{27}{三维重建评价指标}{equation.2.42}{}}
+\newlabel{eq:psnr}{{2-43}{27}{三维重建评价指标}{equation.2.43}{}}
+\newlabel{eq:ssim}{{2-44}{27}{三维重建评价指标}{equation.2.44}{}}
+\citation{zhang2018lpips}
+\newlabel{eq:ssim_constants}{{2-45}{28}{三维重建评价指标}{equation.2.45}{}}
+\newlabel{eq:lpips}{{2-46}{28}{三维重建评价指标}{equation.2.46}{}}
+\citation{fan2017chamfer}
+\citation{wei2025plangenllms,yu2018spider,zhong2020semantic}
+\newlabel{eq:cd}{{2-47}{29}{三维重建评价指标}{equation.2.47}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.3}大语言模型生成质量评价指标}{29}{subsection.2.4.3}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {2.4.3}LLM Generation Metrics}{29}{subsection.2.4.3}\protected@file@percent }
+\newlabel{eq:action_accuracy}{{2-48}{30}{大语言模型生成质量评价指标}{equation.2.48}{}}
+\newlabel{eq:param_match_rate}{{2-49}{30}{大语言模型生成质量评价指标}{equation.2.49}{}}
+\newlabel{eq:executability_rate}{{2-50}{30}{大语言模型生成质量评价指标}{equation.2.50}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.5}本章小结}{31}{section.2.5}\protected@file@percent }
+\@writefile{etoc}{\contentsline {section} {\numberline {\sffamily  2.5}Summary} {31}{section.2.5}}
+\@setckpt{chapters/chapter2}{
+\setcounter{page}{33}
+\setcounter{equation}{50}
+\setcounter{enumi}{0}
+\setcounter{enumii}{0}
+\setcounter{enumiii}{0}
+\setcounter{enumiv}{0}
+\setcounter{footnote}{0}
+\setcounter{mpfootnote}{0}
+\setcounter{parentequation}{0}
+\setcounter{AM@survey}{0}
+\setcounter{part}{0}
+\setcounter{chapter}{2}
+\setcounter{section}{5}
+\setcounter{subsection}{0}
+\setcounter{subsubsection}{0}
+\setcounter{paragraph}{0}
+\setcounter{subparagraph}{0}
+\setcounter{figure}{7}
+\setcounter{table}{0}
+\setcounter{blankpage}{1}
+\setcounter{float@type}{16}
+\setcounter{algorithm}{0}
+\setcounter{ALC@unique}{0}
+\setcounter{ALC@line}{0}
+\setcounter{ALC@rem}{0}
+\setcounter{ALC@depth}{0}
+\setcounter{algo}{0}
+\setcounter{thm}{0}
+\setcounter{defn}{0}
+\setcounter{conj}{0}
+\setcounter{exmp}{0}
+\setcounter{rem}{0}
+\setcounter{case}{0}
+\setcounter{caption@flags}{2}
+\setcounter{continuedfloat}{0}
+\setcounter{subfigure}{0}
+\setcounter{subtable}{0}
+\setcounter{lstnumber}{1}
+\setcounter{section@level}{0}
+\setcounter{Item}{0}
+\setcounter{Hfootnote}{0}
+\setcounter{Hy@AnnotLevel}{0}
+\setcounter{bookmark@seq@number}{31}
+\setcounter{pp@a@footnote}{2}
+\setcounter{LT@tables}{0}
+\setcounter{LT@chunks}{0}
+\setcounter{NAT@ctr}{0}
+\setcounter{lstlisting}{0}
+}

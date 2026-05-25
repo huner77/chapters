@@ -1,0 +1,33 @@
+%%==================================================
+%% abstract.tex for BIT Master Thesis
+%% modified by yang yating
+%% version: 0.1
+%% last update: Dec 25th, 2016
+%%==================================================
+
+% !TeX root = ../main.tex
+
+\begin{abstract}
+随着人工智能、机器人技术与虚拟仿真技术的快速发展，面向化学实验的具身智能技术正在成为相关方向的研究重点。然而，现有研究在化学实验场景生成、高保真化学资产重建以及面向化学实验的具身智能任务规划等方面仍存在明显不足，限制了具身智能系统在化学实验任务中的训练效率、仿真真实性和实际应用能力。因此，本文围绕面向化学实验的具身智能技术，从场景生成、物体重建与任务规划三个层面开展研究。
+
+（1）针对化学实验场景生成问题，本文提出了一种面向具身智能的化学实验场景生成算法。该算法利用大语言模型解析实验描述，生成实验物体清单与实验步骤，并结合化学知识库和资产库完成安全补齐与资产检索。在此基础上，系统通过构建物体约束图生成满足实验逻辑与安全要求的实验场景。针对复杂场景中人工浏览成本较高的问题，本文进一步设计了面向场景展示的相机规划算法，以提高关键区域的展示效率。为提升场景质量与多样性，本文提出了人机协同的场景进化算法，迭代生成兼顾质量与多样性的场景集合。
+
+（2）针对化学资产重建问题，本文提出了一种基于隐式神经场的高保真化学物体重建算法，构建了从多视角图像输入到显式纹理模型输出的完整流程。针对透明物体表面提取不稳定的问题，本文采用基于绝对距离场局部极小值搜索的统一表面提取策略。针对小物体监督信号稀疏、训练收敛缓慢的问题，本文提出学习态增强策略，以提升有限训练预算下的几何重建质量。针对神经隐式场难以直接生成可用纹理资产的问题，本文进一步提出高分辨率纹理贴图生成方法，生成可直接用于仿真平台和渲染引擎的显式纹理模型。
+
+（3）针对化学实验任务规划问题，本文提出了一种从实验手册文本到机器人操作指令的分层转化算法。该算法通过“实验手册文本—步骤计划—操作原语”的逐层映射，实现从高层实验语义到机器人操作序列的稳定转化，并在机器人仿真平台中执行经典化学实验进行验证。实验结果表明，本文所提出的方法能够生成安全、高质量的化学实验场景，重建出高保真的化学资产，并实现从文本指令到机器人实验操作的转化，为面向化学实验的具身智能研究提供了较为完整的技术支撑。
+\end{abstract}
+
+
+\keywords{具身智能； 仿真化学实验；三维场景生成； 神经隐式重建 }
+
+\begin{enabstract}
+With the rapid development of artificial intelligence, robotics, and virtual simulation technologies, embodied intelligence for chemical experiments has become an important research topic. To address the limitations of existing studies in scene generation, asset reconstruction, and task planning, this dissertation studies embodied intelligence technologies for chemical experiments from these three aspects.
+
+First, this dissertation proposes a chemical experiment scene generation algorithm for embodied intelligence. A large language model is used to parse experiment descriptions, generate object lists and procedures, and combine a chemical knowledge base with an asset library for safety completion and asset retrieval. Object constraint graphs are then constructed to generate scenes that satisfy experimental logic and safety requirements. A camera planning algorithm and a human-in-the-loop scene evolution algorithm are further introduced to improve scene presentation, quality, and diversity.
+
+Second, this dissertation proposes a high-fidelity reconstruction algorithm for chemical assets based on implicit neural fields. The method builds a complete pipeline from multi-view images to explicit textured models. For transparent objects, a unified surface extraction strategy based on local minima in the absolute distance field is adopted. For small objects, a learning state enhancement strategy is proposed to improve geometric reconstruction under limited training budgets. A high-resolution texture generation method is also developed to produce explicit textured assets for simulation platforms and rendering engines.
+
+Third, this dissertation proposes a hierarchical translation algorithm from experiment manual text to robot operation commands. The algorithm maps experiment text to structured step plans and then to operation primitives, enabling stable translation from high-level experimental semantics to robot-executable action sequences. Experiments on a robotic simulation platform show that the proposed methods can generate safe chemical experiment scenes, reconstruct high-fidelity chemical assets, and translate textual instructions into robot operations, providing technical support for embodied intelligence research in chemical experiments.
+\end{enabstract}
+
+\enkeywords{embodied intelligence; virtual chemistry experiments; 3D scene generation; neural implicit reconstruction}

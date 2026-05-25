@@ -1,0 +1,151 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\pp@pagectr{footnote}{3}{57}{32}
+\@writefile{toc}{\contentsline {chapter}{\numberline {第3章\hspace  {.3em}}基于大语言模型的化学实验场景生成}{32}{chapter.3}\protected@file@percent }
+\@writefile{lof}{\addvspace {10.0pt}}
+\@writefile{lot}{\addvspace {10.0pt}}
+\@writefile{etoc}{\contentsline {chapter} {\numberline {\sffamily  Chapter 3}LLM-driven Chemistry Lab Generation} {32}{chapter.3}}
+\newlabel{chap:llm_lab_gen}{{3}{32}{基于大语言模型的化学实验场景生成}{chapter.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.1}引言}{32}{section.3.1}\protected@file@percent }
+\@writefile{etoc}{\contentsline {section} {\numberline {\sffamily  3.1}Introduction} {32}{section.3.1}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.1}{\ignorespaces 基于大语言模型的化学实验场景生成算法框架图。该框架以基于大语言模型的场景生成算法为核心，并进一步结合面向场景展示的相机规划模块与人机协同的场景进化算法，对初始生成场景进行高效评审与迭代优化。}}{33}{figure.caption.16}\protected@file@percent }
+\newlabel{fig:ch3_framework}{{3.1}{33}{基于大语言模型的化学实验场景生成算法框架图。该框架以基于大语言模型的场景生成算法为核心，并进一步结合面向场景展示的相机规划模块与人机协同的场景进化算法，对初始生成场景进行高效评审与迭代优化。}{figure.caption.16}{}}
+\citation{devlin2018bert}
+\@writefile{lot}{\contentsline {table}{\numberline {3.1}{\ignorespaces 资产库核心数据字段}}{34}{table.caption.17}\protected@file@percent }
+\newlabel{tab:asset_metadata_fields}{{3.1}{34}{资产库核心数据字段}{table.caption.17}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.2}算法设计与实现}{34}{section.3.2}\protected@file@percent }
+\@writefile{etoc}{\contentsline {section} {\numberline {\sffamily  3.2}Algorithm Design and Implementation} {34}{section.3.2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.1}基于大语言模型的化学实验场景生成算法}{34}{subsection.3.2.1}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {3.2.1}A Chemical Experiment Scene Generation Algorithm}{34}{subsection.3.2.1}\protected@file@percent }
+\newlabel{sec:llm_gen_scene}{{3.2.1}{34}{基于大语言模型的化学实验场景生成算法}{subsection.3.2.1}{}}
+\newlabel{eq:sim_fusion}{{3-1}{34}{基于大语言模型的化学实验场景生成算法}{equation.3.1}{}}
+\citation{radford2021learning}
+\citation{bran2024chemcrow}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces LLM-driven Chemical Experiment Scene Generation}}{36}{algorithm.1}\protected@file@percent }
+\newlabel{algo:llm_scene_generation_en}{{1}{36}{LLM-driven Chemical Experiment Scene Generation}{algorithm.1}{}}
+\citation{hastings1970monte}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.2}面向场景展示的相机规划算法}{37}{subsection.3.2.2}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {3.2.2}Camera Planning Algorithm for Scene Visualization}{37}{subsection.3.2.2}\protected@file@percent }
+\newlabel{sec:camera_inspection}{{3.2.2}{37}{面向场景展示的相机规划算法}{subsection.3.2.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.2}{\ignorespaces 相机规划流程图。（a）三维场景，（b）二维平面图，（c）障碍物距离场，（d）二值化障碍物场（红色点为回环点），（e）相机轨迹（红色曲线），（f）蓝色箭头表示具有完整 6 自由度姿态的相机候选视角。（g）绿色箭头是最优的相机子路径}}{38}{figure.caption.18}\protected@file@percent }
+\newlabel{fig:camera_planning_flow}{{3.2}{38}{相机规划流程图。（a）三维场景，（b）二维平面图，（c）障碍物距离场，（d）二值化障碍物场（红色点为回环点），（e）相机轨迹（红色曲线），（f）蓝色箭头表示具有完整 6 自由度姿态的相机候选视角。（g）绿色箭头是最优的相机子路径}{figure.caption.18}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {2}{\ignorespaces Camera Planning for Scene Visualization}}{39}{algorithm.2}\protected@file@percent }
+\newlabel{algo:camera_planning}{{2}{39}{Camera Planning for Scene Visualization}{algorithm.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3.2}{\ignorespaces 物体重要性等级的权重映射标准}}{40}{table.caption.19}\protected@file@percent }
+\newlabel{tab:weight_mapping}{{3.2}{40}{物体重要性等级的权重映射标准}{table.caption.19}{}}
+\citation{fritsch1984method}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.3}人机协同的场景进化算法}{41}{subsection.3.2.3}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {3.2.3}Scene Evolution Algorithm for Embodied Intelligence Training}{41}{subsection.3.2.3}\protected@file@percent }
+\newlabel{sec:evo_opt}{{3.2.3}{41}{人机协同的场景进化算法}{subsection.3.2.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.3}{\ignorespaces 交叉结果图。融合父代不同的设计模式，生成多样化的子代。}}{42}{figure.caption.20}\protected@file@percent }
+\newlabel{fig:diverse_cross}{{3.3}{42}{交叉结果图。融合父代不同的设计模式，生成多样化的子代。}{figure.caption.20}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.4}{\ignorespaces 变异结果图。在场景整体设计风格不变的前提下，通过调整物体属性与空间关系，生成多样化的布局方案。}}{43}{figure.caption.21}\protected@file@percent }
+\newlabel{fig:mutate_furniture}{{3.4}{43}{变异结果图。在场景整体设计风格不变的前提下，通过调整物体属性与空间关系，生成多样化的布局方案。}{figure.caption.21}{}}
+\citation{xu2012fitdiverse}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {3}{\ignorespaces LLM-driven Evolutionary Optimization}}{44}{algorithm.3}\protected@file@percent }
+\newlabel{algo:llm_evo}{{3}{44}{LLM-driven Evolutionary Optimization}{algorithm.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.3}实验结果与分析}{45}{section.3.3}\protected@file@percent }
+\@writefile{etoc}{\contentsline {section} {\numberline {\sffamily  3.3}Experimental Results and Analysis} {45}{section.3.3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.1}实验设置}{45}{subsection.3.3.1}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {3.3.1}Experimental Setup}{45}{subsection.3.3.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3.3}{\ignorespaces 不同大语言模型在本章算法框架下的化学场景生成成功率对比}}{46}{table.caption.22}\protected@file@percent }
+\newlabel{tab:prompt_refinement_success_rate}{{3.3}{46}{不同大语言模型在本章算法框架下的化学场景生成成功率对比}{table.caption.22}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.2}场景生成的实验分析}{46}{subsection.3.3.2}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {3.3.2}Experimental Analysis of Scene Generation}{46}{subsection.3.3.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3.5}{\ignorespaces 本章算法生成的化学实验场景示例。}}{47}{figure.caption.23}\protected@file@percent }
+\newlabel{fig:chem_lab_example}{{3.5}{47}{本章算法生成的化学实验场景示例。}{figure.caption.23}{}}
+\newlabel{fig:sub:a}{{3.6a}{49}{Living room}{figure.caption.24}{}}
+\newlabel{sub@fig:sub:a}{{a}{49}{Living room}{figure.caption.24}{}}
+\newlabel{fig:sub:b}{{3.6b}{49}{Bathroom}{figure.caption.24}{}}
+\newlabel{sub@fig:sub:b}{{b}{49}{Bathroom}{figure.caption.24}{}}
+\newlabel{fig:sub:c}{{3.6c}{49}{Bedroom}{figure.caption.24}{}}
+\newlabel{sub@fig:sub:c}{{c}{49}{Bedroom}{figure.caption.24}{}}
+\newlabel{fig:sub:d}{{3.6d}{49}{Kitchen}{figure.caption.24}{}}
+\newlabel{sub@fig:sub:d}{{d}{49}{Kitchen}{figure.caption.24}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.6}{\ignorespaces 本章算法生成的不同房间类型场景示例。}}{49}{figure.caption.24}\protected@file@percent }
+\newlabel{fig:llm_show}{{3.6}{49}{本章算法生成的不同房间类型场景示例。}{figure.caption.24}{}}
+\newlabel{fig:chemlab_clip_score}{{3.7a}{50}{CLIP Score 对比}{figure.caption.25}{}}
+\newlabel{sub@fig:chemlab_clip_score}{{a}{50}{CLIP Score 对比}{figure.caption.25}{}}
+\newlabel{fig:key_object_completeness_ratio_three_stage}{{3.7b}{50}{物品覆盖率对比}{figure.caption.25}{}}
+\newlabel{sub@fig:key_object_completeness_ratio_three_stage}{{b}{50}{物品覆盖率对比}{figure.caption.25}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.7}{\ignorespaces 化学实验场景生成结果对比。(a) 不同大语言模型生成的化学实验场景平均 CLIP Score 对比。(b) GPT 与 Qwen 在三个阶段的关键物品覆盖率对比。其中，First Pass 表示未经安全补齐的初始物品清单，Safety+ 表示经过安全补齐后的理论物品清单，Post-Retrieval 表示经过资产检索与匹配后的实际物品清单。}}{50}{figure.caption.25}\protected@file@percent }
+\newlabel{fig:chemlab_results_comparison}{{3.7}{50}{化学实验场景生成结果对比。(a) 不同大语言模型生成的化学实验场景平均 CLIP Score 对比。(b) GPT 与 Qwen 在三个阶段的关键物品覆盖率对比。其中，First Pass 表示未经安全补齐的初始物品清单，Safety+ 表示经过安全补齐后的理论物品清单，Post-Retrieval 表示经过资产检索与匹配后的实际物品清单。}{figure.caption.25}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.3}相机规划的实验分析}{50}{subsection.3.3.3}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {3.3.3}Experimental Analysis of Camera Planning}{50}{subsection.3.3.3}\protected@file@percent }
+\newlabel{fig:camera_planning:a}{{3.8a}{51}{Kitchen}{figure.caption.26}{}}
+\newlabel{sub@fig:camera_planning:a}{{a}{51}{Kitchen}{figure.caption.26}{}}
+\newlabel{fig:camera_planning:b}{{3.8b}{51}{Living Room}{figure.caption.26}{}}
+\newlabel{sub@fig:camera_planning:b}{{b}{51}{Living Room}{figure.caption.26}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.8}{\ignorespaces 相机规划结果图。左侧为场景俯视图，右侧上方为沿相机路径拍摄的关键帧，右侧下方为对应的相机轨迹。红线表示相机路径，绿色箭头表示相机位置与朝向。}}{51}{figure.caption.26}\protected@file@percent }
+\newlabel{fig:camera_planning}{{3.8}{51}{相机规划结果图。左侧为场景俯视图，右侧上方为沿相机路径拍摄的关键帧，右侧下方为对应的相机轨迹。红线表示相机路径，绿色箭头表示相机位置与朝向。}{figure.caption.26}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.4}进化算法的实验分析}{51}{subsection.3.3.4}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {3.3.4}Experimental Analysis of Evolutionary Algorithm}{51}{subsection.3.3.4}\protected@file@percent }
+\newlabel{fig:camera_ablation:a}{{\caption@xref {fig:camera_ablation:a}{ on input line 575}}{52}{相机规划的实验分析}{figure.caption.27}{}}
+\newlabel{sub@fig:camera_ablation:a}{{}{52}{相机规划的实验分析}{figure.caption.27}{}}
+\newlabel{fig:camera_ablation:b}{{\caption@xref {fig:camera_ablation:b}{ on input line 581}}{52}{相机规划的实验分析}{figure.caption.27}{}}
+\newlabel{sub@fig:camera_ablation:b}{{}{52}{相机规划的实验分析}{figure.caption.27}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.9}{\ignorespaces 相机规划能量函数的消融实验结果图。}}{52}{figure.caption.27}\protected@file@percent }
+\newlabel{fig:camera_ablation}{{3.9}{52}{相机规划能量函数的消融实验结果图。}{figure.caption.27}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.10}{\ignorespaces 传统随机算子与大语言模型驱动算子的 CLIP Score 对比结果。}}{53}{figure.caption.28}\protected@file@percent }
+\newlabel{fig:clip_score}{{3.10}{53}{传统随机算子与大语言模型驱动算子的 CLIP Score 对比结果。}{figure.caption.28}{}}
+\newlabel{fig:user_study_sample_num}{{3.11a}{53}{不同迭代轮次下的平均浏览样本数与满意率。}{figure.caption.29}{}}
+\newlabel{sub@fig:user_study_sample_num}{{a}{53}{不同迭代轮次下的平均浏览样本数与满意率。}{figure.caption.29}{}}
+\newlabel{fig:user_study_iter}{{3.11b}{53}{用户满意度的累计分布。}{figure.caption.29}{}}
+\newlabel{sub@fig:user_study_iter}{{b}{53}{用户满意度的累计分布。}{figure.caption.29}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.11}{\ignorespaces 进化算法用户调研的统计结果。}}{53}{figure.caption.29}\protected@file@percent }
+\newlabel{fig:user_study}{{3.11}{53}{进化算法用户调研的统计结果。}{figure.caption.29}{}}
+\citation{murray2012ava,vessel2018shared,kim2020objectivity}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.5}局限性分析}{54}{subsection.3.3.5}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {3.3.5}Limitations Analysis}{54}{subsection.3.3.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3.4}本章小结}{55}{section.3.4}\protected@file@percent }
+\@writefile{etoc}{\contentsline {section} {\numberline {\sffamily  3.4}Summary of This Chapter} {55}{section.3.4}}
+\@setckpt{chapters/chapter3}{
+\setcounter{page}{57}
+\setcounter{equation}{10}
+\setcounter{enumi}{2}
+\setcounter{enumii}{0}
+\setcounter{enumiii}{0}
+\setcounter{enumiv}{0}
+\setcounter{footnote}{0}
+\setcounter{mpfootnote}{0}
+\setcounter{parentequation}{0}
+\setcounter{AM@survey}{0}
+\setcounter{part}{0}
+\setcounter{chapter}{3}
+\setcounter{section}{4}
+\setcounter{subsection}{0}
+\setcounter{subsubsection}{0}
+\setcounter{paragraph}{0}
+\setcounter{subparagraph}{0}
+\setcounter{figure}{11}
+\setcounter{table}{3}
+\setcounter{blankpage}{1}
+\setcounter{float@type}{16}
+\setcounter{algorithm}{3}
+\setcounter{ALC@unique}{86}
+\setcounter{ALC@line}{29}
+\setcounter{ALC@rem}{0}
+\setcounter{ALC@depth}{0}
+\setcounter{algo}{0}
+\setcounter{thm}{0}
+\setcounter{defn}{0}
+\setcounter{conj}{0}
+\setcounter{exmp}{0}
+\setcounter{rem}{0}
+\setcounter{case}{0}
+\setcounter{caption@flags}{6}
+\setcounter{continuedfloat}{0}
+\setcounter{subfigure}{2}
+\setcounter{subtable}{0}
+\setcounter{lstnumber}{1}
+\setcounter{section@level}{0}
+\setcounter{Item}{8}
+\setcounter{Hfootnote}{0}
+\setcounter{Hy@AnnotLevel}{0}
+\setcounter{bookmark@seq@number}{44}
+\setcounter{pp@a@footnote}{3}
+\setcounter{LT@tables}{0}
+\setcounter{LT@chunks}{0}
+\setcounter{NAT@ctr}{0}
+\setcounter{lstlisting}{0}
+}

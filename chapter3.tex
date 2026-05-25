@@ -1,0 +1,653 @@
+%%==================================================
+%% chapter03.tex for Doctoral Thesis
+%% Chapter 3: LLM-driven Virtual Chemistry Lab Generation
+%% Simplified wording version (avoid obscure terms)
+%%==================================================
+
+% !TeX root = ../main.tex
+
+\chapter{基于大语言模型的化学实验场景生成}
+\enchapter{LLM-driven Chemistry Lab Generation}
+\label{chap:llm_lab_gen}
+
+当前的化学实验场景生成算法在安全约束、场景质量和多样性等方面仍存在显著不足，限制了其在化学实验具身智能任务中的应用效果。为此，本章提出一种由大语言模型驱动的化学实验场景生成算法，用于生成满足化学安全规范的实验场景。为进一步提高场景的评审效率与场景质量，本章进一步引入面向场景展示的相机规划模块以及人机协同的场景进化算法，对初始场景进行展示支持与迭代优化。
+
+具体而言，利用大语言模型将自然语言形式的实验描述解析为物体清单与实验步骤，并结合化学知识库进行安全补齐，接着生成物体约束图，最终基于约束图生成初始场景。为便于对场景进行快速浏览与人工评审，本章进一步设计了面向场景展示的相机规划模块，自动生成显著区域的展示视角序列。在此基础上，针对初始场景在质量和多样性上的不足，本章引入人机协同的场景进化算法，通过大语言模型驱动的交叉与变异算子以及人工评审机制，对布局方案进行迭代优化。实验结果表明，本章所提算法能够生成安全、高质量和多样的化学实验场景。
+
+\section{引言}
+\ensection{Introduction}
+
+高质量的化学实验场景是面向具身智能开展化学实验任务研究的重要基础。为了使具身智能系统能够在虚拟环境中完成化学实验相关任务，需要构建能够反映真实实验流程与实验室规范的三维场景。与一般室内场景相比，化学实验室存在大量具有特定功能和安全属性的专业资产，并且其空间布局必须同时满足实验流程逻辑和操作安全要求。
+
+随着虚拟仿真技术、机器人技术以及人工智能的发展，三维场景生成逐渐成为计算机图形学、机器人学与人工智能交叉研究的热点方向。高质量的仿真环境不仅能够降低真实实验的成本和风险，还能够为具身智能提供大规模、可控的实验环境，从而支持算法开发、任务验证与系统评估。在这一背景下，自动化生成符合实际应用需求的三维实验环境，对于推动自动化实验、智能机器人以及数字孪生实验室的发展具有重要意义。
+
+然而，在高度专业化的化学实验环境中，现有场景生成算法仍然存在明显局限。一方面，传统基于规则或模板的生成算法通常依赖人工设计的布局规则或预定义的空间模式，虽然能够保证一定程度的可解释性，但在复杂实验流程和多样化实验环境下往往缺乏灵活性，难以兼顾布局合理性与场景多样性。另一方面，即使利用大语言模型进行场景生成，也往往只能保证语义层面的合理性，而难以同时满足实验安全规范、机器人任务执行需求等多方面要求，从而限制了生成场景在具身智能任务中的实际应用价值。
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/ch3/ch3_framework}
+\caption{基于大语言模型的化学实验场景生成算法框架图。该框架以基于大语言模型的场景生成算法为核心，并进一步结合面向场景展示的相机规划模块与人机协同的场景进化算法，对初始生成场景进行高效评审与迭代优化。}
+\label{fig:ch3_framework}
+\end{figure}
+
+针对上述问题，本章提出一种基于大语言模型的化学实验场景生成算法，其整体框架如图~\ref{fig:ch3_framework}所示。该算法以化学实验场景的生成为核心，利用大语言模型的语义理解与知识推理能力，将自然语言形式的实验描述转化为实验物体清单与空间约束图，并进一步生成符合安全规范的实验室布局。考虑到生成结果往往包含较多物体和复杂空间关系，人工逐视角检查效率较低，本章进一步设计了面向场景展示的相机规划模块，用于自动生成覆盖关键区域的展示轨迹，以支持后续人工评审。进一步地，为提升初始生成场景的质量与多样性，本章引入人机协同的场景进化算法，利用大语言模型驱动的语义交叉与变异算子对场景方案进行迭代优化，从而得到更加丰富且更符合需求的候选实验场景。
+
+
+\section{算法设计与实现}
+\ensection{Algorithm Design and Implementation}
+
+\subsection{基于大语言模型的化学实验场景生成算法}
+\ensubsection{A Chemical Experiment Scene Generation Algorithm}
+\label{sec:llm_gen_scene}
+
+\noindent\textbf{（1）面向大语言模型的资产检索方案}
+
+在具身智能场景生成任务中，三维资产检索的核心在于如何将非结构化的三维几何模型转化为大语言模型可理解、可推理的语义实体。因此本章设计了一套面向大语言模型的资产检索与匹配框架。该框架通过确立统一的资产接口标准，实现了自然语言描述向三维物理实体的精准映射，并具备良好的扩展性，能够兼容主流开源数据集及用户自建资产库。
+
+为使大语言模型能够理解三维模型的语义信息，本章定义了如表 \ref{tab:asset_metadata_fields} 所示的资产接口协议。该协议不仅涵盖了基础的语义描述与几何尺度，还引入了多视角视觉特征、放置约束及安全标签。这些元数据为大语言模型提供了丰富的语义信息，使其在生成场景方案时，进行更为精准的资产匹配与合理的空间布局规划。
+
+
+\begin{table}[t]
+  \centering
+  \renewcommand{\arraystretch}{1.15}
+  \caption{资产库核心数据字段}
+  \label{tab:asset_metadata_fields}
+  \begin{tabular}{p{0.23\linewidth} p{0.16\linewidth} p{0.55\linewidth}}
+    \hline
+    \textbf{字段} & \textbf{类型} & \textbf{说明} \\
+    \hline
+    \texttt{assetId} & string &
+    资产唯一标识，用于索引。 \\
+    \texttt{source} & string &
+    标识资产的来源。 \\
+    \texttt{text description} & string &
+    资产的文字描述，用于文字语义匹配。\\
+    \texttt{3D bounding box size} & float list &
+    三维包围盒长宽高，用于尺寸大小匹配。 \\
+    \texttt{multi-view images} & image list &
+    多视角渲染得到的 2D 图像集合，用于视觉相似度匹配。 \\
+    \texttt{placement}  & bool list &
+    放置约束，表明布局阶段资产可以摆放的地方：地板上/墙壁上/其他物体上/天花板上。 \\
+    \texttt{hazard class} & enum  &
+    安全标签（易燃/腐蚀/有毒/高温/电器/玻璃易碎等），用于安全检验规则。 \\
+    \hline
+  \end{tabular}
+\end{table}
+
+
+基于上述元数据，本章综合文本语义、视觉特征与几何尺度三个维度，提出了多模态融合的资产检索评分算法。该算法目标是从资产库中筛选出最符合大语言模型生成物品清单的候选物体。计算公式如下：
+\begin{equation}
+\mathrm{sim} = w_t\,\mathrm{sim}_{\text{text}} + w_v\,\mathrm{sim}_{\text{vis}} + w_s\,\mathrm{sim}_{\text{size}},
+\label{eq:sim_fusion}
+\end{equation}
+其中，$w_t, w_v, w_s$ 为调节各项相似度权重的超参数，各项相似度指标的定义如下：
+\begin{enumerate}
+\item \textbf{文本相似度 $\mathrm{sim}_{\text{text}}$}：衡量资产描述与大语言模型生成物体描述之间的文本一致性。具体利用 BERT~\cite{devlin2018bert} 模型分别对 \texttt{text description} 与目标描述进行向量化编码，并计算余弦相似度。
+\item \textbf{视觉相似度 $\mathrm{sim}_{\text{vis}}$}：衡量资产视觉外观与预期类别的匹配度。通过 CLIP~\cite{radford2021learning} 视觉编码器提取 \texttt{multi-view 2D images} 的特征向量，计算其与目标文本特征的匹配分数。
+\item \textbf{尺度相似度 $\mathrm{sim}_{\text{size}}$}：衡量资产几何尺寸的接近度。计算资产包围盒 \texttt{3D bounding box size} 与大语言模型预期的物理尺度之间的欧氏距离，并进行归一化处理。
+
+\end{enumerate}
+
+在检索过程中，系统针对每个目标物体 $o_i$ 计算综合评分并进行降序排列。保留前 $K$ 个候选资产（Top-$K$）构建冗余候选集，目的是为后续的场景布局规划阶段预留回溯空间：当排名首位的资产因约束不满足时，系统可自动选择至候选集中的后续资产，从而提高场景生成的成功率与减少再次检索的耗时。
+
+
+\noindent\textbf{（2）面向化学实验的物体约束图生成}
+
+
+本小节目标是将自然语言形式的实验描述 $T$ 转化为符合化学安全规范和操作高效的三维空间布局。算法包括物体清单生成、清单安全补齐、约束图构建及布局求解四个阶段，如算法流程\ref{algo:llm_scene_generation_en}所示。
+\begin{algorithm}[h]
+\caption{LLM-driven Chemical Experiment Scene Generation}
+\label{algo:llm_scene_generation_en}
+\begin{algorithmic}[1]
+
+\STATE $(O,\{s_k\}) \gets \text{SemanticParse}(T)$
+\STATE $O \gets \text{SafetyComplete}(O,\{s_k\})$
+
+\FOR{each target object $o_i \in O$}
+    \STATE $C_i \gets \text{RetrieveAssets}(o_i,A,K)$
+\ENDFOR
+
+\STATE $H \gets \text{BuildInteractionGraph}(\{s_k\})$
+\STATE $G \gets \text{InferConstraintGraph}(O,H)$
+\STATE $(G_{hard},G_{soft},O_{\text{anchor}},O_{\text{rest}}) \gets \text{SplitConstraints}(G)$
+
+\STATE $S \gets \text{SceneInit}()$
+\STATE $S_{\text{best}} \gets S$
+\STATE $score_{\text{best}} \gets -\infty$
+\STATE $time \gets 0$
+
+\WHILE{$(time < time_{\max}) \ \textbf{and}\ (score_{\text{best}} < score_{\text{exp}})$}
+    \FOR{each anchor object $o_i \in O_{\text{anchor}}$}
+        \STATE $S \gets \text{PlaceObject}(o_i,S,G_{hard},C_i)$
+    \ENDFOR
+
+    \FOR{each remaining object $o_i \in O_{\text{rest}}$}
+        \STATE $S \gets \text{PlaceObject}(o_i,S,G_{hard},C_i)$
+        \STATE $\textit{score} \gets \text{CalculateSceneScore}(S,G_{soft})$
+        \IF{$\textit{score} > score_{\text{best}}$}
+            \STATE $S_{\text{best}} \gets S$
+            \STATE $score_{\text{best}} \gets \textit{score}$
+        \ELSE
+            \STATE $S \gets \text{Backtrack}(S)$
+        \ENDIF
+    \ENDFOR
+    \STATE $time \gets \text{UpdateTime}()$
+\ENDWHILE
+
+\STATE \textbf{return} $S_{\text{best}}$
+\end{algorithmic}
+\end{algorithm}
+
+
+
+首先是物体清单生成阶段。在接收到自然语言描述后，利用大语言模型将文本 $T$ 解析为物体清单 $O$ 和实验操作步骤$\{s_k\}$。物体清单 $O$ 描述了场景中应该包括的所有物体以及它们的属性（文本描述、大小）。实验操作步骤 $\{s_k\}$ 则是记录了实验过程中的动作以及操作的物体。
+
+考虑到通用大语言模型在化学专业领域知识上的局限性，本章参考 ChemCrow\cite{bran2024chemcrow} 的思路，构建了专门的化学知识库，包含了经典的化学实验与对应的实验物体与安全规范。系统通过检索知识库，对物体清单 $O$ 进行安全性补齐。
+
+在完成物体清单补齐后，算法接着求解物体间的空间关系。通过分析实验步骤 $\{s_k\}$，统计不同物体之间的交互频率，并构建物体交互频率图。其中，节点表示场景物体，边权表示两个物体在实验流程中发生直接交互的频率。该交互图用于表征实验流程对空间邻近性的需求，即交互频率较高的物体在布局中通常应具有更短的操作距离，以降低实验过程中的移动开销并提高操作效率。
+
+在此基础上，利用大语言模型在预训练时掌握的场景设计知识，并结合交互频率图与化学知识库，最终推导出物体约束图。该图以物体为节点，以空间约束为边，其中约束包含以下三类：
+\begin{enumerate}
+\item \textbf{全局位置约束}：用于描述单个物体相对于实验室整体空间的放置区域，包括靠墙、居中、靠门三种位置。
+\item \textbf{相对距离约束}：用于描述两个物体在布局中的邻近程度，包括很近、近、适中、远、很远五种等级。
+\item \textbf{相对方位约束}：用于描述两个物体之间的相对方向关系，包括前后、左右和上下三种方位。
+\end{enumerate}
+
+其中将相对距离分为五种等级，是为第~\ref{sec:evo_opt} 节中的约束图变异提供更多的离散搜索空间，使后续进化过程能够通过调整距离等级实现布局的细粒度微调与多样化生成。
+
+为了进一步确保生成的约束图满足化学实验室的安全规范，本章将空间约束划分为硬约束与软约束。硬约束用于表示布局必须满足的要求，例如安全规范，任何违反都会导致布局判为不可行。软约束则用于表示通用的设计偏好与交互频率偏好，在后续布局求解中允许在必要时被部分违反，但其满足程度将影响最终布局评分。
+
+最后，系统基于生成的约束图进行场景布局。该问题是一个组合优化问题，本章采用一种启发式求解算法，优先摆放锚点物品，接着摆放剩余物体，在满足硬约束的前提下对软约束的满足情况进行评分计算，满足的软约束越多评分越高。考虑到场景布局求解空间过于庞大，当程序运行时间达到上限 $time_{\max}$ 或达到预期评分 $score_{\text{exp}}$ 时，终止运行，最终选取评分最高的场景布局作为最终结果。
+
+
+
+\subsection{面向场景展示的相机规划算法}
+\ensubsection{Camera Planning Algorithm for Scene Visualization}
+\label{sec:camera_inspection}
+
+在\ref{sec:llm_gen_scene}节中，本章完成了三维场景的初步生成。在评估场景生成质量时，若直接依赖人工在三维场景中自由漫游，不仅浏览效率较低，也难以在较短时间内准确把握场景的显著区域与完整情况。为此，本章设计了一个面向场景展示的相机规划模块，让原本需要人工反复调整视角才能完成的场景浏览过程，转变为只需要几秒时间就能快速了解到场景的整体布局与重点区域。
+
+\begin{figure}[!t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/ch3/camera_planning}
+  \caption{相机规划流程图。（a）三维场景，（b）二维平面图，（c）障碍物距离场，（d）二值化障碍物场（红色点为回环点），（e）相机轨迹（红色曲线），（f）蓝色箭头表示具有完整 6 自由度姿态的相机候选视角。（g）绿色箭头是最优的相机子路径}
+\label{fig:camera_planning_flow}
+\end{figure}
+
+
+本章所提出的相机规划算法流程如图~\ref{fig:camera_planning_flow}和算法\ref{algo:camera_planning}所示。
+首先，将三维场景 $\text{S}$ 投影到二维平面得到二维平面图（图~\ref{fig:camera_planning_flow}(b)），在此基础上，通过计算平面内各点 $x$ 到最近障碍物或墙面边界的距离，构建障碍物距离场 $D$（图~\ref{fig:camera_planning_flow}(c)）。利用阈值 $T$ 对距离场 $D$ 进行离散化映射，从而生成二值化障碍物场 $D^{\prime}$（图~\ref{fig:camera_planning_flow}(d)）。在二值化障碍物场 $D^{\prime}$ 上，对障碍连通域进行轮廓提取可得到一组闭合回环 $\{\Gamma_j\}$，其离散回环点在图~\ref{fig:camera_planning_flow}(d)中以红色点标记。通过离散回环点重建回环后，选择周长最大的环作为初始相机轨迹 $\Gamma_{\text{raw}}$，随后通过消除短环、平滑高曲率区域并应用高斯滤波，得到一条平滑的相机轨迹 $\Gamma_{\text{full}}$（对应图~\ref{fig:camera_planning_flow}(e)中的红色曲线）。
+
+在生成完整的平滑相机轨迹 $\Gamma_{\text{full}}$ 后，由于其存在较高的信息冗余与序列过长，会给用户带来过大的浏览负担，不适合直接将其作为最终展示路径，因此需要对该轨迹进行精简，找到最佳的子轨迹。
+
+\begin{algorithm}[!t]
+\caption{Camera Planning for Scene Visualization}
+\label{algo:camera_planning}
+\begin{algorithmic}[1]
+
+\STATE \textbf{Stage I: Candidate Path and Viewpoint Generation}
+
+\STATE $B \gets \text{ProjectTo2D}(S)$
+\STATE $D \gets \text{ComputeDistanceField}(B)$
+\STATE $D^{\prime} \gets \text{Threshold}(D, T)$
+
+\STATE $\{\Gamma_j\} \gets \text{ExtractClosedLoops}(D^{\prime})$
+\STATE $\Gamma_{\text{raw}} \gets \text{SelectLargestPerimeterLoop}(\{\Gamma_j\})$
+\STATE $\Gamma_{\text{full}} \gets \text{SmoothPath}(\Gamma_{\text{raw}})$
+
+\STATE $\{a_i\}_{i=1}^{N} \gets \text{SampleAnchors}(\Gamma_{\text{full}})$
+\FOR{$i = 1$ \TO $N$}
+    \STATE $v_i \gets \text{MCMCRefineView}(a_i, S)$
+\ENDFOR
+\STATE $V \gets \{v_i\}_{i=1}^{N}$
+
+
+\STATE
+
+\STATE \textbf{Stage II: Optimal Subpath Selection and Interpolation}
+
+
+\STATE $\textit{bestScore} \gets -\infty$
+\STATE $\Gamma_{\text{best}} \gets \emptyset$
+
+
+
+\FOR{$i = 1$ \TO $N-M+1$}
+    \STATE $\Gamma_{\text{sub}} \gets \{v_i, v_{i+1}, \dots, v_{i+M-1}\}$
+    \STATE $E_b \gets \text{SalienceScore}(\Gamma_{\text{sub}})$
+    \STATE $E_c \gets \text{CoverageScore}(\Gamma_{\text{sub}})$
+    \STATE $E_s \gets \text{SmoothnessScore}(\Gamma_{\text{sub}})$
+    \STATE $\textit{curScore} \gets w_b E_b + w_c E_c + w_s E_s$
+    \IF{$\textit{curScore} > \textit{bestScore}$}
+        \STATE $\textit{bestScore} \gets \textit{curScore}$
+        \STATE $\Gamma_{\text{best}} \gets \Gamma_{\text{sub}}$
+    \ENDIF
+\ENDFOR
+
+\STATE $\text{AdaptiveInterpolation}(\Gamma_{\text{best}})$
+
+\end{algorithmic}
+\end{algorithm}
+
+
+本章首先沿 $\Gamma_{\text{full}}$ 进行离散采样，得到一组初始候选相机锚点。随后，在每个锚点附近的六自由度空间（位置与朝向）内采用马尔可夫链蒙特卡洛（Markov Chain Monte Carlo\cite{hastings1970monte},MCMC）算法在锚点周围进行局部搜索，基于显著性生成一组适合场景展示的候选视角。记由此得到的候选视角集合为
+\begin{equation}
+\text{V}=\{v_i\}_{i=1}^{N}, \qquad v_i=(Pos_i,Rot_i),
+\end{equation}
+其中，$N$ 为候选视角总数，$Pos_i$ 表示第 $i$ 个候选视角的位置，$Rot_i$ 表示其朝向。图~\ref{fig:camera_planning_flow}(f)中的蓝色箭头即表示这些具有完整六自由度姿态的候选视角。
+接下来的任务是从 $N$ 个候选视角中选取连续的 $M$ 个关键视角，构成最终用于展示的最优子路径：
+\begin{equation}
+\Gamma_{sub}=\{v_{k}\}_{k=1}^{M}.
+\end{equation}
+其中，$\Gamma_{sub}$ 表示从完整候选路径中筛选得到的最优视角子序列，其目标是在保证轨迹连续性的同时，尽可能突出关键实验区域、提升整体覆盖率并保持运动平滑。
+
+
+\begin{table}[htp]
+  \centering
+  \caption{物体重要性等级的权重映射标准}
+  \label{tab:weight_mapping}
+  \begin{tabular}{lc}
+    \toprule
+    重要性等级 & 权重值 $\alpha_i$\\
+    \midrule
+    十分重要 & 1.0 \\
+    重要 & 0.75 \\
+    一般 & 0.5 \\
+    不重要 & 0.25 \\
+    完全不重要 & 0.0 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+对于子序列 $\Gamma_{sub}$, 首先需要考虑其对关键物体的展示质量，记为能量项 $E_b(\Gamma_{sub})$。对于每个物体 $o_i$，由大语言模型结合物体清单与实验语义生成其重要性权重 $\alpha_i \in [0,1]$，如表\ref{tab:weight_mapping}所示。此外还需要考虑显著物体的可见比例，确保能够清晰地被展示。记 $V_i$ 为物体 $o_i$ 的总体积，$V_i^{\mathrm{vis}}$ 为在视角的可见体积。于是，$E_b(\Gamma_{sub})$ 定义为
+\begin{equation}
+E_b(\Gamma_{sub})
+=
+\frac{1}{M}
+\sum_{k=1}^{M}
+\sum_{i=1}^{N}
+\alpha_i \cdot \frac{V_i^{\mathrm{vis}}(v_{k})}{V_i}.
+\end{equation}
+
+场景的展示不应只局限于显著物体，还需要包含一定数量的边角物体，以便观察者能够更全面地把握场景的整体情况。因此，本章用能量项 $E_c(\Gamma_{sub})$ 来衡量子轨迹的场景覆盖能力。对于场景中的每个物体 $o_i$，若其在视角 $v_{k}$ 下可见，则记 $\delta_i(v_{k})=1$，否则记 $\delta_i(v_{k})=0$。在此基础上，本章统计子轨迹中每个物体是否至少被观察到一次，并将被覆盖的物体数量占场景总物体数的比例定义为覆盖能量：
+\begin{equation}
+E_c(\Gamma_{sub})
+=
+\frac{1}{N}
+\sum_{i=1}^{N}
+\min\left(1,\sum_{k=1}^{M}\delta_i(v_{k})\right).
+\end{equation}
+其中，$N$ 表示场景中的物体总数，$M$ 表示子轨迹中的视角数量。该定义表示：只要某个物体在子轨迹的任意一个视角中被观察到，就认为该物体已被当前子轨迹覆盖，即使其在多个视角中重复出现，也只计数一次。因此，$E_c(\Gamma_{sub})$ 越大，表明该子轨迹能够覆盖越多的场景内容，从而更有利于观察者在较短时间内把握实验空间的整体组织方式与物体分布情况。
+
+
+本章希望子轨迹中相邻视角之间的相机位置与朝向变化尽可能平缓，从而避免运动过程中出现明显抖动或跳变。为此，本章对于运动平滑能量项 $E_s(\Gamma_{sub})$，定义如下：
+\begin{equation}
+E_s(\Gamma_{sub})
+=
+\exp\left(
+-\frac{1}{M-1}
+\sum_{k=1}^{M-1}
+\left[
+\lambda_p \|P_{{k+1}}-P_{k}\|_2
++
+\lambda_r \arccos\left(
+\frac{\operatorname{tr}(R_{k}^{\top}R_{{k+1}})-1}{2}
+\right)
+\right]
+\right),
+\end{equation}
+其中，$M$ 表示子轨迹中的视角数量，$P_{k}$ 和 $R_{k}$ 分别表示第 $k$ 个视角的相机位置与朝向，$\lambda_p$ 和 $\lambda_r$ 分别为平移项与旋转项的权重系数。该式通过对子轨迹中相邻视角的位置差与朝向差取平均，衡量整条路径的运动平滑程度。当相邻视角之间的位置变化和朝向变化都较小时，$E_s(\Gamma_{sub})$ 更接近于 $1$，反之，若子轨迹中存在较大的位移跳变或视角突变，则该项会减小。
+
+为了量化评估候选子路径的展示质量，本章构建了一个综合考虑物体显著性、场景覆盖率与运动平滑度的启发式评分函数。
+
+基于此，子路径 $\Gamma_{sub}$ 的全局评分函数定义为
+\begin{equation}
+\operatorname{score}(\Gamma_{sub})=w_b \cdot E_b(\Gamma_{sub})+w_c \cdot E_c(\Gamma_{sub})+w_s \cdot E_s(\Gamma_{sub}),
+\end{equation}
+其中，$w_b$、$w_c$、$w_s$ 分别为关键物体展示项、覆盖项与平滑项的权重系数。
+
+通过优化得到分数最大的子路径的关键视角后，本章采用分段三次 PCHIP 插值（Piecewise Cubic Hermite Interpolation\cite{fritsch1984method}, PCHIP）对所选取的 $M$ 个关键视角进行连接，从而生成连续的最终展示轨迹。
+
+为了让用户重点关注显著区域、快速浏览低价值区域，本章采用自适应插值密度策略：对于显著区域，使用更细的插值，使相机在该区域以较慢速度运动，从而便于用户充分浏览显著内容。而对于视觉吸引力较弱但仍需经过以保证整体覆盖的区域，则采用较粗的插值，使相机以较快速度通过。如图~\ref{fig:camera_planning_flow}(e)所示，最终生成的展示轨迹能够在视觉吸引力、场景覆盖率与观看舒适性之间取得较好的平衡。
+
+通过上述设计，本章所提出的相机规划算法能够在保证展示质量的同时，显著提升用户浏览三维场景的效率与体验，为后续的人工评审提供了有力支持。
+
+
+\subsection{人机协同的场景进化算法}
+\ensubsection{Scene Evolution Algorithm for Embodied Intelligence Training}
+\label{sec:evo_opt}
+
+在第\ref{sec:llm_gen_scene}节中，本章探讨了利用大语言模型生成高质量三维实验场景。然而，由于化学实验环境具有高度的专业性，大语言模型生成的黑盒特性可能导致生成结果与用户期望产生不小偏差。并且，具身智能任务对环境的多样性与可用性有着较高要求，需要多样化、高质量的场景方案提供支撑。
+
+针对上述挑战，本节提出了一种人机协同的场景进化算法。该算法旨在安全约束的底线之上，通过引入交互式演化机制，将大语言模型的语义推理能力与人工反馈相结合。通过多轮次的演化搜索，算法能够在确保场景功能合理性的基础上，生成一组兼顾高语义质量与空间分布多样性的场景方案，从而为后续具身智能任务提供可靠的场景支撑。
+
+\noindent\textbf{(1) 大语言模型驱动的交叉与变异}
+
+为实现对场景内容与空间布局的联合优化，生成高质量、多样化的场景，本章将个体的基因型 $\text{X}$ 定义为物体清单 $\text{O}$ 与布局约束图 $\text{G}$ 的结合，即：
+\begin{equation}
+\text{X}=(\text{O},\text{G}),
+\end{equation}
+其中，$\text{O}$ 与\text{G}分别对应第\ref{sec:llm_gen_scene}节中定义的物体清单和约束图。$\text{O}$包含物品描述、类别及必要的语义属性。$\text{G}$ 则用于刻画物体间的空间约束关系。这种表示方式使得进化算子可以在语义层面对场景进行可解释的修改，例如调整场景物体的属性、数量或约束关系，从而生成结构各异、功能合理的候选场景。
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\textwidth]{figures/ch3/diverse_cross}
+\caption{交叉结果图。融合父代不同的设计模式，生成多样化的子代。}
+\label{fig:diverse_cross}
+\end{figure}
+
+\noindent\textbf{交叉算子：}
+给定父代个体 $X_1=(O_1, G_1)$ 与 $X_2=(O_2, G_2)$，本章将交叉过程形式化定义为：
+\begin{equation}
+X_c = \textsc{Crossover}(X_1, X_2) = (O_c, G_c),
+\end{equation}
+其中，$\textsc{Crossover}(\cdot)$ 表示语义感知交叉算子，$X_c$ 为生成的子代。相比于传统进化算法中随机交换方式，该算子利用大语言模型的语义推理能力，提取父代场景中表现优异的局部设计特征进行重新组合，生成新的物体集合 $O_c$ 与布局约束图 $G_c$。图 \ref{fig:diverse_cross} 展示了该算子在处理不同布局风格时的重组能力，通过融合不同父代的设计特征，生成的子代展现出了显著的设计差异。
+
+
+\noindent\textbf{变异算子：}
+变异算子的目标是在维持场景基本合理性的前提下，通过引入适度扰动来探索搜索空间中的潜在布局方案，生成形态各异且安全可用的实验场景，如图 \ref{fig:mutate_furniture} 所示。本章将变异过程定义为：
+\begin{equation}
+X'_c = \textsc{Mutate}(X_c) = (O'_c, G'_c),
+\end{equation}
+其中，$O'_c$ 与 $G'_c$ 分别表示变异后的物体集合与布局约束图。变异操作具体涵盖以下两个维度：
+\begin{enumerate}
+\item \textbf{物体变异 ($O_c \rightarrow O'_c$)：} 对 $O_c$ 中的非核心资产进行增删或同类语义替换。
+\item \textbf{约束图变异 ($G_c \rightarrow G'_c$)：} 对约束图的拓扑边进行局部调整。这包括微调物体间的距离等级，或增减方位约束。
+\end{enumerate}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\textwidth]{figures/ch3/mutate_furniture}
+\caption{变异结果图。在场景整体设计风格不变的前提下，通过调整物体属性与空间关系，生成多样化的布局方案。}
+\label{fig:mutate_furniture}
+\end{figure}
+
+在完成交叉和变异后，系统需进一步将生成的中间表征 $(O'_c, G'_c)$ 转换为新的候选场景。若物体清单 $O'_c$ 发生变更，系统将优先从父代 $G_1$、$G_2$ 中检索并继承相关的空间约束关系，对于父代未包含的新增物体或失效的约束关系，则调用第 \ref{sec:llm_gen_scene} 节所述的场景生成算法，由大语言模型基于化学常识补齐约束关系。若 $O'_c$ 保持不变，仅在语义层面融合了不同的布局倾向，则直接基于更新后的约束图 $G'_c$ 进行布局求解。通过这种方式，不仅能够在局部设计层面实现优良特征的传递与重组，还能在全局布局层面保持安全约束的连续性与合理性，从而生成既多样又高质量的场景方案。
+
+
+\noindent\textbf{(2) 人机协同的场景进化}
+
+\begin{algorithm}[!t]
+\caption{LLM-driven Evolutionary Optimization}
+\label{algo:llm_evo}
+\begin{algorithmic}[1]
+
+    \STATE \textbf{Stage I: Initial Population Generation}
+
+    \STATE $G_0 \gets \emptyset$
+    \WHILE{$|G_0| < N$}
+        \STATE $S \gets \text{LLM\_Generate}()$
+        \IF{$\text{user satisfied S}$}
+            \STATE $G_0 \gets G_0 \cup \{S\}$
+        \ELSE
+            \STATE discard $S$
+        \ENDIF
+    \ENDWHILE
+    \STATE $B \gets G_0$
+
+    \STATE
+    \STATE \textbf{Stage II: LLM-driven Evolutionary}
+
+    \STATE $i \gets 0$
+    \WHILE{(user not satisfied) \textbf{and} ($i < T$)}
+        \STATE $G_{i+1} \gets \emptyset$
+        \WHILE{$|G_{i+1}| < N$}
+            \STATE Select $S_{\text{parent1}}, S_{\text{parent2}} \in G_i$
+            \STATE $S_{\text{child}} \gets \text{LLM\_Crossover}(S_{\text{parent1}}, S_{\text{parent2}})$
+            \STATE $S_{\text{child}} \gets \text{LLM\_Mutation}(S_{\text{child}})$
+            \IF{user satisfy $S_{\text{child}}$}
+                \STATE $G_{i+1} \gets G_{i+1} \cup \{S_{\text{child}}\}$
+            \ENDIF
+        \ENDWHILE
+        \STATE $G_{i+1} \gets \text{SelectDiverse}(G_i \cup G_{i+1} \cup B, N+M)$
+        \STATE $B \gets \text{SelectDiverse}(B \cup G_{i+1}, |B|)$
+        \STATE $G_i \gets G_{i+1}$
+        \STATE $i \gets i + 1$
+    \ENDWHILE
+\end{algorithmic}
+\end{algorithm}
+
+在场景进化过程中，本章采用了人工交互式选择机制，主要原因如下：首先，大语言模型在场景布局生成的过程中具有一定的黑盒特征，其生成的逻辑与质量存在随机性与不确定性，单纯依靠算法难以确保每一个初始解的合理性。其次，化学实验室的评估维度具有极强的高层语义属性，例如细琐繁多的安全规范、真实实验室风格的布局以及实验动线的合理性等，往往难以通过简单的几何关系或数值指标进行精准量化。
+
+具体流程如算法 \ref{algo:llm_evo} 所示，整个场景进化过程可分为两个阶段：初始种群生成阶段与迭代进化阶段。在初始阶段，系统持续调用 $\text{LLM\_Generate}()$ 生成候选场景，并由人工对其进行初步筛选。只有满足用户的要求时，才将其加入初始种群 $G_0$，直到种群规模达到预设值 $N$。随后，系统将该初始种群同时作为当前进化种群和历史保留的优良解集合的基础。
+
+在迭代进化阶段，系统以当前种群 $G_i$ 为基础进行新一轮演化。对于每一个待生成子代，首先从当前种群中选取两个父代场景 $S_{\text{parent1}}$ 和 $S_{\text{parent2}}$，利用 $\text{LLM\_Crossover}()$ 融合二者在物体清单及空间组织上的特征，再通过 $\text{LLM\_Mutation}()$ 对子代场景进行局部扰动，以引入新的布局变化与语义组合。生成后的子代场景通过相机规划算法自动拍摄具有代表性视角，供用户进行综合评估。用户结合任务可达性、安全常识遵循度以及空间布局自然性等多个方面进行判断。只有通过用户筛选的子代个体，才会被加入候选下一代集合 $G_{i+1}$。
+
+当一轮子代生成完成后，为避免演化过程因过度追求局部最优而导致场景同质化，借鉴Xu等人的工作~\cite{xu2012fitdiverse}的核心思想，采用兼顾质量与差异性的集合维护策略，$SelectDiverse$会对当前种群、子代种群以及历史保留集合进行联合筛选，每轮迭代上多保留了$M$个多样性个体。系统不仅满足用户需求高质量的场景作为后代繁殖的基础，还适度保留一部分具有差异性的场景，以维持种群的长期探索能力。这样的设计使得整个人机协同进化过程既能够继承优质布局，又能持续引入新的空间组织方式，充分发挥大语言模型在语义交叉与变异上的生成优势以及人类在高层语义判断上的能力。最终，算法在用户满意或达到最大迭代次数 $T$ 时终止，并输出一组兼具可用性与多样性的候选实验场景，为后续具身智能任务提供更加丰富的环境支持。
+
+
+\section{实验结果与分析}
+\ensection{Experimental Results and Analysis}
+
+\subsection{实验设置}
+\ensubsection{Experimental Setup}
+为系统验证本文所提出的化学实验场景生成算法在场景生成、相机规划与场景进化三个模块上的有效性，本文从实验平台、数据集构建、模型配置以及评价任务四个方面进行实验设计。本文全部实验均在配备 NVIDIA GeForce RTX 3090 显卡的工作站上完成，场景构建、渲染与图像采集均基于 Unity 引擎实现。
+
+在数据集方面，本文从网络公开资料中整理了 20 条经典化学实验指导书，涵盖氧化还原反应、酸碱中和反应等典型实验任务，并据此构建本章实验所用的文本输入集合。对于每条实验描述，本文提取对应的实验提示词、核心实验物体以及相关操作语义，用于支持场景生成质量分析、关键物品覆盖率统计以及后续相机规划与场景进化实验。为评估不同大语言模型在化学实验场景生成任务中的表现，针对每个模型均对这 20 条实验描述进行 5 次独立生成，共得到 100 个场景样本，并在此基础上开展成功率与生成质量分析。
+
+在大模型使用方面，若无特殊说明，本文默认采用 GPT-5.1 作为基础大语言模型，主要用于实验描述解析、物体清单生成、约束图构建以及场景进化阶段的语义交叉与变异操作。为进一步分析所提框架对不同模型的适配能力，本文在统一场景生成流程下，对 GPT-5.1、Claude-Sonnet-4.6、Gemini-2.5-Pro、Qwen-3.5-Pro、DeepSeek-3.2V 和 Doubao-2-Pro 进行了对比测试。在多模型比较实验中，统一提示词下的初始成功率用于反映不同模型对本任务的直接适配能力。对于初始成功率较低的模型，本文进一步通过补充结构化输出要求、示例指导与约束强调等方式进行模型特定提示词优化，并统计优化后的成功率，用于分析模型经过针对性提示词调整后的可用性能。
+
+\subsection{场景生成的实验分析}
+\ensubsection{Experimental Analysis of Scene Generation}
+
+
+\noindent\textbf{（1）场景成功生成率}
+
+\begin{table}[!t]
+\centering
+\caption{不同大语言模型在本章算法框架下的化学场景生成成功率对比}
+\label{tab:prompt_refinement_success_rate}
+\small
+\setlength{\tabcolsep}{8pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lcc}
+\toprule
+\textbf{模型} & \textbf{初始成功率（\%）} & \textbf{优化后成功率（\%）} \\
+\midrule
+GPT               & 99 & --   \\
+Claude            & 24 & 82   \\
+Gemini            & 0  & 45   \\
+Qwen              & 97 & --   \\
+DeepSeek          & 93 & --   \\
+Doubao            & 72 & 94   \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.5em}
+\begin{minipage}{0.92\linewidth}
+\footnotesize
+\textit{注：}优化后成功率仅对初始成功率低于 90\% 的模型进行统计，“--”表示未进行额外提示词优化。
+\end{minipage}
+\end{table}
+
+表~\ref{tab:prompt_refinement_success_rate} 详细对比了各主流大语言模型在本章算法框架下的生成表现。实验结果显示，GPT、Qwen 与 DeepSeek 在初始条件下即可达到 93\% 以上的成功率。同时，原本表现稍弱的模型在经过提示词优化后，性能均有显著提升，其中 Doubao 的成功率由 72\% 提升到 94\%，Claude 也提升至 82\%。这些数据表明，本章提出的场景生成框架能够有效适配多种不同架构的大语言模型，具备良好的模型兼容性与算法鲁棒性，不依赖于特定的大语言模型即可稳定运行。
+
+
+由于提示词对模型性能影响不小，而本章的提示词是基于 GPT 模型设计的，因此本章还对初始成功率较低的模型（如 Doubao、Claude 等）进行了提示词优化，通过引入更明确的结构化输出要求、增加示例指导和强调约束条件等方式，显著提升了模型在场景生成任务中的表现。这表明，初始成功率较低的模型是因为对任务理解有偏差，通过合理设计提示词能够有效引导模型理解任务需求并输出符合规范的结果，从而提升整体系统的生成质量与成功率。然而，Gemini 经过提示词优化后结果仍然较差，这反映出这类模型在应对强约束的结构化输出任务时存在天然短板，可能更适合处理开放式对话或知识问答等生成任务。
+
+
+\noindent\textbf{（2）场景生成质量可视化分析}
+
+\begin{figure}[!t]
+  \centering
+  \includegraphics[width=0.96\linewidth]{figures/ch3/chem_lab_example}
+  \caption{本章算法生成的化学实验场景示例。}
+  \label{fig:chem_lab_example}
+\end{figure}
+图~\ref{fig:chem_lab_example}可视化地展示了本章算法在化学实验场景生成中的实际效果，包括简单酸碱中和实验、液体加热实验以及沉淀反应实验。每一行对应一种实验任务的提示词，每种提示词下均给出了三个生成结果。可以看出，本章算法能够根据实验语义信息生成与任务相匹配的实验场景。例如在加热实验中，生成的场景中包括灭火器等安全设施。同时，由于大语言模型输出的随机性，在相同提示词条件下，本章算法能够产生符合语义信息且具有多样化特征的场景，天然具备一定的场景多样性生成能力。
+
+
+为了进一步验证算法的通用性与鲁棒性，本章将该生成框架的应用范围从专业实验室扩展到了普通室内环境。图~\ref{fig:llm_show} 展示了本章算法在经典室内场景上的生成结果。对于客厅、卧室这类以家具约束关系为主的空间，系统能够较好地组织家具之间的约束关系。对于浴室、厨房场景，系统也能够在有限空间内维持较为合理的摆放密度与相对位置关系。
+
+\begin{figure}[htbp]
+  \centering
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics[width=1.0\textwidth]{figures/ch3/llm_livingroom.png}
+    \caption{Living room}
+    \label{fig:sub:a}
+  \end{subfigure}\\[1em]
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics[width=1.0\textwidth]{figures/ch3/llm_bathroom.png}
+    \caption{Bathroom}
+    \label{fig:sub:b}
+  \end{subfigure}\\[1em]
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics[width=1.0\textwidth]{figures/ch3/llm_bedroom.png}
+    \caption{Bedroom}
+    \label{fig:sub:c}
+  \end{subfigure}
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics[width=1.0\textwidth]{figures/ch3/llm_kitchen.png}
+    \caption{Kitchen}
+    \label{fig:sub:d}
+  \end{subfigure}
+  \caption{本章算法生成的不同房间类型场景示例。}
+  \label{fig:llm_show}
+\end{figure}
+
+
+\noindent\textbf{（3）场景生成质量定量分析}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{subfigure}[t]{0.47\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/ch3/chemlab_clip_score}
+    \caption{CLIP Score 对比}
+    \label{fig:chemlab_clip_score}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.47\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/ch3/key_object_completeness_ratio_three_stage}
+    \caption{物品覆盖率对比}
+    \label{fig:key_object_completeness_ratio_three_stage}
+  \end{subfigure}
+  \caption{化学实验场景生成结果对比。(a) 不同大语言模型生成的化学实验场景平均 CLIP Score 对比。(b) GPT 与 Qwen 在三个阶段的关键物品覆盖率对比。其中，First Pass 表示未经安全补齐的初始物品清单，Safety+ 表示经过安全补齐后的理论物品清单，Post-Retrieval 表示经过资产检索与匹配后的实际物品清单。}
+  \label{fig:chemlab_results_comparison}
+\end{figure}
+
+在通过可视化方式展示场景生成效果后，本节进一步引入定量指标 CLIP Score，分析不同大语言模型在场景生成质量上的差异。由图~\ref{fig:chemlab_clip_score} 可见，不同大语言模型在化学实验场景生成中的生成质量也存在显著差异。GPT 取得了最高的平均 CLIP Score 27.6，其他模型则较为接近。结合表~\ref{tab:prompt_refinement_success_rate} 的成功率结果可以看出，能够更好理解提示词并充分激发能力的模型，不仅更容易完成端到端场景生成流程，而且在成功生成后往往也能取得更高的场景生成质量。
+
+由于实验物品不齐全会导致无法进行实验，并且缺失安全设备也会导致存在安全隐患，因此本节进一步深入考察算法对实验必需物品的生成覆盖率。本章选取具有代表性的 GPT 和 Qwen 两个大语言模型，对其在三个阶段生成的物品清单进行实验分析，结果如图~\ref{fig:key_object_completeness_ratio_three_stage} 所示。图中，First Pass 表示模型未经安全补齐时第一次输出的物品清单，此时反映的是模型的初步理论生成能力，Safety+ 表示经过安全补齐后的物品清单，反映的是在规则与领域知识增强后理论上应覆盖的物体集合，Post-Retrieval 表示经过资产库匹配检索后的物品清单，对应系统中最终实际可用的物体集合。
+
+从实验数据来看，大语言模型在化学知识储备方面展现出了较强的专业基础能力。以 GPT 为例，其在 First Pass 阶段的关键物品覆盖率已达到 0.91，Qwen 也达到 0.87，这表明主流大语言模型在仅依据实验文本进行初步推理时，便能准确识别并给出绝大部分核心实验物品。在此基础上，本章提出的安全补齐机制起到了查漏补缺作用。引入该机制后，这两个大语言模型的覆盖率分别进一步提升至 0.93 与 0.92。这一结果验证了结合安全补齐的必要性，使得在理论层面已能构建出高度完备的实验环境，通常只存在极个别非核心物品的遗漏。
+
+然而，Post-Retrieval 阶段的覆盖率相较于 Safety+ 均有显著下降趋势，GPT 降至 0.75，Qwen 降至 0.73。这表明，在理论物品清单经过实际资产库检索与匹配后，最终可落地的场景物体集合与理想情况之间仍存在一定差距。其主要原因在于，当前资产库仍以通用室内场景资产为主，对于化学实验场景中化学专业物体的收集尚不充分，导致部分理论上应存在的物品在检索阶段无法找到相近匹配的三维资产。由此可见，在本章框架下，尽管大语言模型已能够支持较高质量的理论物品清单构建，但受限于化学专业资产的缺乏，限制了场景生成质量进一步提升。
+
+\subsection{相机规划的实验分析}
+\ensubsection{Experimental Analysis of Camera Planning}
+
+\begin{figure}[!t]
+  \centering
+  % 子图 a)
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics[height=4cm,width=1.0\textwidth]{figures/ch3/camera_keyframe_2.png}
+    \caption{Kitchen}
+    \label{fig:camera_planning:a}
+  \end{subfigure}\\[1em]
+  % 子图 b)
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics[height=4cm,width=1.0\textwidth]{figures/ch3/camera_keyframe_3.png}
+    \caption{Living Room}
+    \label{fig:camera_planning:b}
+  \end{subfigure}\\[1em]
+
+  \caption{相机规划结果图。左侧为场景俯视图，右侧上方为沿相机路径拍摄的关键帧，右侧下方为对应的相机轨迹。红线表示相机路径，绿色箭头表示相机位置与朝向。}
+  \label{fig:camera_planning}
+\end{figure}
+
+
+图~\ref{fig:camera_planning} 展示了本章所提的相机规划算法在室内场景中的可视化效果。图中红色轨迹是相机规划的路径，绿色箭头是最优子序列的观测视角。观测视角能够较好地覆盖场景中的显著性物体，例如在图~\ref{fig:camera_planning:a}Kitchen 例子中，规划的视角能很好的捕获到饭桌、冰箱和椅子等显著性物体，能够有效帮助用户快速聚焦场景的核心区域。在图~\ref{fig:camera_planning:b}Living Room 例子中，规划的视角尽可能覆盖了场景中全部物体，能让用户对场景有完整的了解。
+
+
+\begin{figure}[!t]
+  \centering
+  % 子图 a)
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics[height=8cm, width=1.0\textwidth]{figures/ch3/camera_ablation_1.png}
+    \label{fig:camera_ablation:a}
+  \end{subfigure}\\[1em]
+  % 子图 b)
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics[height=8cm,width=1.0\textwidth]{figures/ch3/camera_ablation_2.png}
+    \label{fig:camera_ablation:b}
+  \end{subfigure}\\[1em]
+  \caption{相机规划能量函数的消融实验结果图。}
+  \label{fig:camera_ablation}
+\end{figure}
+
+为进一步分析相机规划中各能量项的作用，本章对评分函数中的关键组成部分进行了消融实验，其可视化结果如图~\ref{fig:camera_ablation} 所示。实验结果表明，在缺少覆盖性能量项约束的情况下，所生成的路径过度聚焦于显著性区域，而忽略场景中其他关键物体，导致用户不能完整了解到场景。这表明覆盖性能量因子在场景展示中起到了全局平衡的作用，能够抑制视角过度偏向局部显著区域的问题。
+
+相对地，当缺少平滑性能量项约束后，路径中的相机位置与朝向出现了显著的波动，导致生成了不连续或者是跳跃式的相机路径。尽管此类路径可能获得较高的局部观察分数，但相机路径是为人类服务的，从人类视觉感知的角度分析，会显著降低浏览过程的连贯性与舒适性，使用户难以在连续视角变化中稳定建立对场景空间结构的整体认知。
+
+
+\subsection{进化算法的实验分析}
+\ensubsection{Experimental Analysis of Evolutionary Algorithm}
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/ch3/random_vs_llm.png}
+    \caption{传统随机算子与大语言模型驱动算子的 CLIP Score 对比结果。}
+    \label{fig:clip_score}
+\end{figure}
+为了验证大语言模型驱动的交叉与变异算子在提升场景质量方面的有效性，本章引入 CLIP Score 作为定量评价指标，并将其与基于随机算子的传统进化算法进行对比。实验针对化学实验场景以及通用的经典室内场景分别开展了性能测试，具体的定量对比结果如图~\ref{fig:clip_score} 所示。
+
+从结果分析得，大语言模型驱动进化算子在不同场景类型上整体优于随机算子。针对交叉算子的对比分析，虽然大语言模型驱动交叉与随机交叉的 CLIP Score 较为接近，仅表现出小幅提升，但二者的生成模式存在本质区别。传统的随机交叉主要根据人工预设的规则在父代物体清单中进行交换，当父代场景质量较高时，随机盲目交换的弊端被一定程度地掩盖，仍能生成较为合理的场景。然而大语言模型驱动交叉算子则能够理解并结合场景信息进行更合理的设计，在各种情况下都能够生成更高质量的场景。
+
+相比之下，大语言模型驱动变异算子相对于随机变异的提升更为明显，且这一趋势在化学实验场景与经典室内场景中均一致存在。这表明变异操作更需要语义理解能力：随机变异容易破坏原有布局关系，而大语言模型驱动变异能够在调整局部元素的同时保持整体场景的合理性与语义一致性。对于化学实验场景而言，这一点尤为重要，因为实验设备之间往往存在更强的功能与安全约束。因此，大语言模型驱动变异能够生成质量更高的候选场景，为后续用户筛选与迭代优化提供更好的基础。
+
+\begin{figure}[!t]
+    \centering
+    \begin{subfigure}[t]{0.49\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/ch3/user_study_sample_num.png}
+        \caption{不同迭代轮次下的平均浏览样本数与满意率。}
+        \label{fig:user_study_sample_num}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.49\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/ch3/user_study_iter.png}
+        \caption{用户满意度的累计分布。}
+        \label{fig:user_study_iter}
+    \end{subfigure}
+    \caption{进化算法用户调研的统计结果。}
+    \label{fig:user_study}
+\end{figure}
+
+为了进一步验证进化算法的有效性，本章邀请了 9 名具有化学背景或三维重建背景的研究生开展初步用户调研。在实验过程中，每轮迭代的种群规模设为 16，用户对当前代候选场景进行浏览与筛选，当某一轮中被用户判定为满意的样本数达到 12 个时，系统保留这些高质量个体，并进一步从背景集合中补充抽取 4 个样本作为下一轮父代的一部分。整个进化过程的终止条件设置为：当某次迭代中的用户满意率超过 80\% 时认为当前用户已基本满意，算法提前终止，若迭代达到 10 轮后满意率仍未超过该阈值，则视为当前搜索已接近优化上限，同样终止。
+
+图~\ref{fig:user_study_sample_num} 展示了不同迭代轮次下用户平均浏览样本数与满意率的变化趋势。由结果分析可知，在第 1~3 轮迭代中，用户平均需要浏览的样本数量相对较多，而满意率仍处于较低水平。这一现象表明算法在初始阶段仍处于启动与快速收敛过程中，当前种群中高质量方案占比较低，用户需要在较大的候选空间中完成筛选。随着迭代推进，平均浏览样本数明显下降，而满意率持续上升，尤其在第 4~8 轮区间内，这一趋势最为明显，表明场景进化过程已经逐步收敛，系统生成的候选方案中有更大比例能够直接被用户接受。这意味着，随着高质量个体在种群中的逐步积累，用户为获得满意方案所需付出的筛选成本显著降低。
+
+进一步分析，图~\ref{fig:user_study_iter} 展示了用户满意度的累计分布。可以观察到，当迭代进行到第 8 轮时，累计满意用户比例已接近 90\%，表明本章算法通常能够在较少轮次内将场景优化到用户可接受水平。虽然个别用户在10次迭代后仍未达到满意标准，但满意率与预设阈值的差距已极小。这一现象反映了用户对场景期待的多样性与复杂性，同时也证明了本算法具有良好的鲁棒性，即使面对用户极高要求，也能通过迭代使场景质量逐步逼近用户可接受水平。
+
+
+
+\subsection{局限性分析}
+\ensubsection{Limitations Analysis}
+
+尽管本章提出的化学实验场景生成算法在实验中表现出良好的生成能力与优化效果，但仍存在一定局限性，有待在未来工作中进一步改进。
+
+首先，在场景生成阶段，本章算法对资产库质量具有较强依赖。虽然本章通过构建统一的资产接口协议，并融合文本语义、视觉特征与几何尺度进行多模态检索，但当资产库中缺少与实验需求高度匹配的三维模型时，检索结果仍可能出现不完全一致的情况，从而影响后续场景构建的真实性与可用性。特别是在化学场景生成中，这类专业性强的实验场景往往十分依赖专业资产，资产稀缺问题会进一步限制系统的最终生成质量。
+
+其次，在场景布局求解阶段，本章从大语言模型生成的约束图出发，采用启发式布局求解算法完成物体放置。该策略能够有效保证硬约束满足与碰撞检测的稳定性，但其本质仍属于“语义生成—几何求解”的两阶段算法。造成这一设计的主要原因在于当前大语言模型在精确空间推理与几何关系建模方面仍存在一定局限，难以直接生成满足严格几何约束的空间布局。未来若大模型在空间理解能力方面进一步提升，有望实现从文本描述到三维布局的端到端生成与优化。
+
+最后，本章在场景进化阶段引入了人机协同机制，以弥补化学实验场景高层质量难以完全形式化描述的问题。该设计能够有效结合大语言模型的生成能力与人的综合判断能力，但仍依赖人工筛选，因而存在成本较高、标准一致性不足以及可扩展性受限等问题。尽管场景优劣判断带有一定主观性，但类似于美学评价中存在一定程度的人类共识~\cite{murray2012ava,vessel2018shared,kim2020objectivity}，若未来能够建立更具普适性的化学实验室质量量化指标，并以此替代部分人工筛选过程，则有望进一步降低人工成本。
+
+
+
+\section{本章小结}
+\ensection{Summary of This Chapter}
+
+本章面向化学实验场景生成过程中安全性以及场景质量难以保证等问题，提出了一种由大语言模型驱动的化学实验场景生成框架。该框架围绕实验描述解析、物体约束建模与场景布局求解三个核心环节展开，并进一步结合面向场景展示的相机规划模块与人机协同的场景进化算法，构建了从初始场景生成到场景评审与迭代优化的完整流程，为面向具身智能的虚拟实验环境构建提供了算法基础。
+
+在算法上，本章首先利用大语言模型对自然语言形式的实验描述进行解析，生成实验物体清单与实验步骤，并结合化学知识库完成安全补齐。在此基础上，系统通过构建物体约束图并结合资产检索与布局求解，生成符合实验逻辑与安全规范的初始实验场景。随后，针对复杂场景中人工场景漫游效率较低的问题，本章设计了面向场景展示的相机规划算法，通过综合考虑关键物体显著性、场景覆盖率与运动平滑性，自动生成覆盖重点区域的相机轨迹。进一步地，为提升初始场景在质量与多样性上的表现，本章引入人机协同的场景进化算法，利用大语言模型驱动的交叉与变异算子以及人工评审机制，对场景方案进行持续优化，从而生成更加丰富且更符合需求的候选场景。
+
+实验结果表明，本章所提出的框架能够生成满足化学安全规范、结构合理且具有一定多样性的三维实验场景。相机规划模块能够有效提升场景浏览与人工评审效率，场景进化算法则进一步改善了生成结果的质量与多样性。综上所述，本章工作为具身智能在仿真化学实验环境中的任务验证与系统评估提供了有效的场景支持。
