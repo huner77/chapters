@@ -26,7 +26,7 @@
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{figures/ch3/ch3_framework}
-\caption{基于大语言模型的化学实验场景生成算法框架图。该框架以基于大语言模型的场景生成算法为核心，并进一步结合面向场景展示的相机规划模块与人机协同的场景进化算法，对初始生成场景进行高效评审与迭代优化。}
+\caption{基于大语言模型的化学实验场景生成算法框架图。}
 \label{fig:ch3_framework}
 \end{figure}
 
@@ -50,7 +50,7 @@
 \begin{table}[t]
   \centering
   \renewcommand{\arraystretch}{1.15}
-  \caption{资产库核心数据字段}
+  \caption{资产库核心数据字段表}
   \label{tab:asset_metadata_fields}
   \begin{tabular}{p{0.23\linewidth} p{0.16\linewidth} p{0.55\linewidth}}
     \hline
@@ -170,12 +170,12 @@
 \begin{figure}[!t]
   \centering
   \includegraphics[width=\linewidth]{figures/ch3/camera_planning}
-  \caption{相机规划流程图。（a）三维场景，（b）二维平面图，（c）障碍物距离场，（d）二值化障碍物场（红色点为回环点），（e）相机轨迹（红色曲线），（f）蓝色箭头表示具有完整 6 自由度姿态的相机候选视角。（g）绿色箭头是最优的相机子路径}
+  \caption{相机规划流程图。}
 \label{fig:camera_planning_flow}
 \end{figure}
 
 
-本章所提出的相机规划算法流程如图~\ref{fig:camera_planning_flow}和算法\ref{algo:camera_planning}所示。
+本章所提出的相机规划算法流程如图~\ref{fig:camera_planning_flow}和算法\ref{algo:camera_planning}所示。图中，（a）为生成得到的三维场景，（b）为由三维场景投影得到的二维平面图，（c）为根据障碍物和墙面边界计算得到的障碍物距离场，（d）为阈值化后的二值化障碍物场，其中红色点表示提取得到的回环点，（e）为平滑后的相机轨迹，红色曲线表示完整候选路径，（f）为沿轨迹生成的相机候选视角，蓝色箭头表示具有完整六自由度姿态的候选相机，（g）为从候选视角序列中筛选得到的最优相机子路径。
 首先，将三维场景 $\text{S}$ 投影到二维平面得到二维平面图（图~\ref{fig:camera_planning_flow}(b)），在此基础上，通过计算平面内各点 $x$ 到最近障碍物或墙面边界的距离，构建障碍物距离场 $D$（图~\ref{fig:camera_planning_flow}(c)）。利用阈值 $T$ 对距离场 $D$ 进行离散化映射，从而生成二值化障碍物场 $D^{\prime}$（图~\ref{fig:camera_planning_flow}(d)）。在二值化障碍物场 $D^{\prime}$ 上，对障碍连通域进行轮廓提取可得到一组闭合回环 $\{\Gamma_j\}$，其离散回环点在图~\ref{fig:camera_planning_flow}(d)中以红色点标记。通过离散回环点重建回环后，选择周长最大的环作为初始相机轨迹 $\Gamma_{\text{raw}}$，随后通过消除短环、平滑高曲率区域并应用高斯滤波，得到一条平滑的相机轨迹 $\Gamma_{\text{full}}$（对应图~\ref{fig:camera_planning_flow}(e)中的红色曲线）。
 
 在生成完整的平滑相机轨迹 $\Gamma_{\text{full}}$ 后，由于其存在较高的信息冗余与序列过长，会给用户带来过大的浏览负担，不适合直接将其作为最终展示路径，因此需要对该轨迹进行精简，找到最佳的子轨迹。
@@ -331,7 +331,7 @@ E_s(\Gamma_{sub})
 \begin{figure}[!t]
 \centering
 \includegraphics[width=\textwidth]{figures/ch3/diverse_cross}
-\caption{交叉结果图。融合父代不同的设计模式，生成多样化的子代。}
+\caption{大语言模型驱动的交叉结果图。}
 \label{fig:diverse_cross}
 \end{figure}
 
@@ -344,7 +344,7 @@ X_c = \textsc{Crossover}(X_1, X_2) = (O_c, G_c),
 
 
 \noindent\textbf{变异算子：}
-变异算子的目标是在维持场景基本合理性的前提下，通过引入适度扰动来探索搜索空间中的潜在布局方案，生成形态各异且安全可用的实验场景，如图 \ref{fig:mutate_furniture} 所示。本章将变异过程定义为：
+变异算子的目标是在维持场景基本合理性的前提下，通过引入适度扰动来探索搜索空间中的潜在布局方案，生成形态各异且安全可用的实验场景，如图 \ref{fig:mutate_furniture} 所示，大语言模型驱动的变异算子在场景整体设计风格不变的前提下，通过调整物体属性与空间关系，生成多样化的布局方案。本章将变异过程定义为：
 \begin{equation}
 X'_c = \textsc{Mutate}(X_c) = (O'_c, G'_c),
 \end{equation}
@@ -357,7 +357,7 @@ X'_c = \textsc{Mutate}(X_c) = (O'_c, G'_c),
 \begin{figure}[!t]
 \centering
 \includegraphics[width=\textwidth]{figures/ch3/mutate_furniture}
-\caption{变异结果图。在场景整体设计风格不变的前提下，通过调整物体属性与空间关系，生成多样化的布局方案。}
+\caption{大语言模型驱动的变异结果图。}
 \label{fig:mutate_furniture}
 \end{figure}
 
@@ -526,7 +526,7 @@ Doubao            & 72 & 94   \\
     \caption{物品覆盖率对比}
     \label{fig:key_object_completeness_ratio_three_stage}
   \end{subfigure}
-  \caption{化学实验场景生成结果对比。(a) 不同大语言模型生成的化学实验场景平均 CLIP Score 对比。(b) GPT 与 Qwen 在三个阶段的关键物品覆盖率对比。其中，First Pass 表示未经安全补齐的初始物品清单，Safety+ 表示经过安全补齐后的理论物品清单，Post-Retrieval 表示经过资产检索与匹配后的实际物品清单。}
+  \caption{化学实验场景生成结果对比。}
   \label{fig:chemlab_results_comparison}
 \end{figure}
 
@@ -558,12 +558,12 @@ Doubao            & 72 & 94   \\
     \label{fig:camera_planning:b}
   \end{subfigure}\\[1em]
 
-  \caption{相机规划结果图。左侧为场景俯视图，右侧上方为沿相机路径拍摄的关键帧，右侧下方为对应的相机轨迹。红线表示相机路径，绿色箭头表示相机位置与朝向。}
+  \caption{相机规划结果图。}
   \label{fig:camera_planning}
 \end{figure}
 
 
-图~\ref{fig:camera_planning} 展示了本章所提的相机规划算法在室内场景中的可视化效果。图中红色轨迹是相机规划的路径，绿色箭头是最优子序列的观测视角。观测视角能够较好地覆盖场景中的显著性物体，例如在图~\ref{fig:camera_planning:a}Kitchen 例子中，规划的视角能很好的捕获到饭桌、冰箱和椅子等显著性物体，能够有效帮助用户快速聚焦场景的核心区域。在图~\ref{fig:camera_planning:b}Living Room 例子中，规划的视角尽可能覆盖了场景中全部物体，能让用户对场景有完整的了解。
+图~\ref{fig:camera_planning} 展示了本章所提的相机规划算法在室内场景中的可视化效果。图中左侧为场景俯视图，右侧上方为沿相机路径拍摄的关键帧，右侧下方为对应的相机轨迹。红线表示相机路径，绿色箭头表示相机位置与朝向。观测视角能够较好地覆盖场景中的显著性物体，例如在图~\ref{fig:camera_planning:a}Kitchen 例子中，规划的视角能很好的捕获到饭桌、冰箱和椅子等显著性物体，能够有效帮助用户快速聚焦场景的核心区域。在图~\ref{fig:camera_planning:b}Living Room 例子中，规划的视角尽可能覆盖了场景中全部物体，能让用户对场景有完整的了解。
 
 
 \begin{figure}[!t]
@@ -594,7 +594,7 @@ Doubao            & 72 & 94   \\
 \begin{figure}[!t]
     \centering
     \includegraphics[width=\linewidth]{figures/ch3/random_vs_llm.png}
-    \caption{传统随机算子与大语言模型驱动算子的 CLIP Score 对比结果。}
+    \caption{传统随机算子与大语言模型驱动算子的 CLIP Score 对比结果图。}
     \label{fig:clip_score}
 \end{figure}
 为了验证大语言模型驱动的交叉与变异算子在提升场景质量方面的有效性，本章引入 CLIP Score 作为定量评价指标，并将其与基于随机算子的传统进化算法进行对比。实验针对化学实验场景以及通用的经典室内场景分别开展了性能测试，具体的定量对比结果如图~\ref{fig:clip_score} 所示。
@@ -618,7 +618,7 @@ Doubao            & 72 & 94   \\
         \caption{用户满意度的累计分布。}
         \label{fig:user_study_iter}
     \end{subfigure}
-    \caption{进化算法用户调研的统计结果。}
+    \caption{用户调研的统计结果图。}
     \label{fig:user_study}
 \end{figure}
 

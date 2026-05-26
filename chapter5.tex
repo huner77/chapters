@@ -100,7 +100,7 @@ M=\{\mathtt{Pick},\ \mathtt{Place},\ \mathtt{Pour},\ \mathtt{Stir}\},\qquad m_n\
 当系统接收到的实验指令“进行盐酸和氧化亚铁的反应”后，首先生成步骤计划如表\ref{tab:hcl_feo_plan}所示，算法将复杂的化学反应拆解为一系列具有逻辑先后关系的步骤计划。
 \begin{table}[htbp]
 \centering
-\caption{盐酸与氧化亚铁反应的步骤计划示例}
+\caption{盐酸与氧化亚铁反应的步骤计划示例表}
 \label{tab:hcl_feo_plan}
 \begin{tabular}{c c c c c}
 \toprule
@@ -120,7 +120,7 @@ $p_6$ & Return    & StirRod\_1  & -- & -- \\
 
 \begin{table}[htbp]
 \centering
-\caption{盐酸与氧化亚铁反应的操作原语序列示例}
+\caption{盐酸与氧化亚铁反应的操作原语序列示例表}
 \label{tab:hcl_feo_atomic_actions}
 \small
 \begin{tabular}{c c p{10.4cm}}
@@ -213,7 +213,7 @@ $a_9$ & \texttt{Place} &
 \draw[flow] (s11.west) -- (s12.east);
 
 \end{tikzpicture}
-\caption{盐酸与氧化亚铁反应的仿真平台执行示例}
+\caption{盐酸与氧化亚铁反应的仿真平台执行示例图}
 \label{fig:hcl_feo_demo_sequence}
 \end{figure*}
 
@@ -232,7 +232,7 @@ $a_9$ & \texttt{Place} &
 
 \begin{table}[htbp]
 \centering
-\caption{不同生成算法对操作原语的生成质量对比}
+\caption{不同生成算法对操作原语的生成质量对比表}
 \label{tab:ch5_ablation_tpa}
 \small
 \setlength{\tabcolsep}{8pt}
@@ -257,7 +257,7 @@ Ours & \textbf{0.96} & \textbf{0.98} & \textbf{0.85} \\
 
 \begin{table}[htbp]
 \centering
-\caption{不同生成算法对操作原语的生成成本对比}
+\caption{不同生成算法对操作原语的生成成本对比表}
 \label{tab:ch5_efficiency_cost}
 \small
 \setlength{\tabcolsep}{8pt}
@@ -282,6 +282,7 @@ Ours & 61.17 & 4751.4 & \textbf{79.52} & \textbf{6176.8} \\
 \ensubsection{Limitations Analysis}
 
 尽管本章提出的算法在一定程度上实现了从化学实验手册文本到操作原语序列的自动转化，并在仿真环境中验证了其可执行性与有效性，但该算法仍存在一定的局限性和进一步改进空间。首先，本章当前构建的原语集合仅包含 \texttt{Pick}、\texttt{Place}、\texttt{Pour} 和 \texttt{Stir} 四类基础操作，因此算法的适用范围主要限于以容器取放、物质转移为主的基础实验流程，对于加热、冷却等复杂操作尚未涵盖。其次，当前仿真平台对于液体行为和粒子特效的支持仍然有限，对于倾倒、搅拌、沉淀、颜色变化等与化学实验密切相关的动态过程，尚难以实现高保真的物理模拟与真实呈现。因此，本章实验更多验证的是机器人操作序列在接口层和流程层面的可行性，而对于实验过程中复杂物质变化的还原仍然不足。
+
 
 此外，本章目前的验证范围主要局限于仿真环境，尚未进一步拓展到真实机器人平台。虽然仿真环境能够为算法设计、流程验证与算法评估提供高效且安全的实验条件，但仿真系统中的感知精度、物体属性、动力学响应与真实世界之间仍然存在差异。在真实实验场景中，机器人还需要进一步面对视觉噪声、位姿估计误差、抓取偏差、控制延迟以及安全约束等一系列更加复杂的问题。因此，如何进一步缩小仿真与现实之间的差距，并将本章算法扩展到真实机器人执行场景，仍然是后续研究中需要重点解决的问题。此外，本文异常检测机制主要面向仿真环境中的格式一致性、参数完整性和接口可执行性检查，尚未覆盖真实高危化学实验所需的物理级安全防护。对于真实机器人系统，仍需进一步引入独立于大语言模型的安全约束层，通过硬件急停、传感器冗余、重量与液位检测以及设备互锁机制，避免模型逻辑幻觉直接转化为危险操作。
 

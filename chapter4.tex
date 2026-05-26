@@ -24,7 +24,7 @@
 \begin{figure}[!t]
   \centering
   \includegraphics[width=0.9\textwidth]{figures/ch4/chemical_object_taxonomy}
-  \caption{化学实验物体分类体系}
+  \caption{化学实验物体分类体系图。}
   \label{fig:chemical_object_taxonomy}
 \end{figure}
 
@@ -40,7 +40,7 @@
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{figures/ch4/Neus_Pipeline}
-  \caption{基于 NeuS 的高保真化学资产重建流程图。包含数据预处理、网络训练、网格提取和纹理贴图生成四个模块。}
+  \caption{基于 NeuS 的高保真化学资产重建流程图。}
   \label{fig:neus_pipeline}
 \end{figure}
 
@@ -74,7 +74,7 @@
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.8\textwidth]{figures/ch4/Neus_noise.png}
-    \caption{基于主体Mask的去噪框架图。COLMAP 生成的原始稀疏点云，包含大量环境噪声。利用重投影到主体Mask中剔除噪声，恢复出干净的点云。}
+    \caption{基于主体Mask的去噪框架图。}
     \label{fig:neus_noise}
 \end{figure}
 
@@ -96,7 +96,7 @@
 
 上述损失共同决定了隐式几何场的收敛过程。其中，颜色重建损失和主体 Mask 约束损失为目标表面位置提供主要监督，距离场正则项则保证几何场在优化过程中保持较好的连续性和稳定性。对于普通尺度物体，输入图像中通常包含较充分的主体区域，网络能够从颜色一致性和主体区域约束中获得较密集的几何监督，从而较快完成从初始化状态到粗略几何的过渡。然而，当目标物体在图像中占据区域较小时，来自主体区域的有效监督信号会明显减少。此时，距离场正则项虽然能够维持 SDF 的局部平滑性，但难以单独提供足够明确的表面位置引导，从而导致训练初期的几何收敛速度下降。
 
-在化学实验资产重建中，存在不少小物体，它们在图像中仅占据较少像素，例如药匙、橡胶塞、夹具和小型连接件等。对于这类目标，随机采样得到的训练光线中，大量光线落在背景区域或自由空间区域，真正穿过物体表面及轮廓附近的有效光线比例较低，导致训练初期的几何收敛速度较慢。如图~\ref{fig:small_object_pixels} 所示，小物体的有效监督区域较小，网络更容易长时间停留在粗几何尚未稳定的阶段。
+在化学实验资产重建中，存在不少小物体，它们在图像中仅占据较少像素，例如药匙、橡胶塞、夹具和小型连接件等。对于这类目标，随机采样得到的训练光线中，大量光线落在背景区域或自由空间区域，真正穿过物体表面及轮廓附近的有效光线比例较低，导致训练初期的几何收敛速度较慢。如图~\ref{fig:small_object_pixels} 所示，小物体仅覆盖图像中的较小区域，导致有效监督信号较为稀疏，网络更容易长时间停留在粗几何尚未稳定的阶段。
 
 \begin{figure}[!t]
 \centering
@@ -117,7 +117,7 @@
 \includegraphics[width=\textwidth]{figures/ch4/small_object_3}
 \caption{}
 \end{subfigure}
-\caption{小物体示意图。小物体仅覆盖图像中的较小区域，导致有效监督信号较为稀疏。}
+\caption{小物体示意图。}
 \label{fig:small_object_pixels}
 \end{figure}
 
@@ -126,7 +126,7 @@
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{figures/ch4/NeuS_three_tai.png}
-\caption{NeuS 训练过程中的几何演化图。训练通常遵循从初始单位球到粗略几何，再到精细表面刻画的演化路径。}
+\caption{NeuS 训练过程中的几何演化图。}
 \label{fig:neus_three_stage}
 \end{figure}
 
@@ -247,7 +247,7 @@
 \begin{figure}[!t]
 \centering
 \includegraphics[width=\textwidth]{figures/ch4/Xatlas_Stage_PK.png}
-\caption{纹理贴图生成流程图。主要包含网格提取、网格颜色查询、UV 坐标生成、光栅化烘焙以及纹理后处理修复五个阶段。}
+\caption{纹理贴图生成流程图。}
 \label{fig:xatlas_stage_pk}
 \end{figure}
 
@@ -292,7 +292,7 @@
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.8\textwidth]{figures/ch4/Xatlas_UV.png}
-\caption{UV 坐标生成核心流程。}
+\caption{UV 坐标生成流程图。}
 \label{fig:xatlas_uv}
 \end{figure}
 
@@ -301,7 +301,7 @@
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.8\textwidth]{figures/ch4/Xatlas_PNG.png}
-\caption{纹理贴图生成核心流程。}
+\caption{纹理贴图生成流程图。}
 \label{fig:xatlas_png}
 \end{figure}
 
@@ -331,7 +331,7 @@
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\textwidth]{figures/ch4/Neus_Small_Object_PK.png}
-    \caption{小物体重建阶段结果可视化对比。}
+    \caption{小物体重建阶段可视化对比图。}
     \label{fig:neus_small_object_pk}
 \end{figure}
 
@@ -359,7 +359,7 @@
         \caption{LPIPS}
         \label{fig:lpips_curve_sub}
     \end{subfigure}
-    \caption{小物体重建过程中PSNR、SSIM 和 LPIPS 随训练迭代步数的变化曲线对比。}
+    \caption{小物体重建过程曲线对比图。}
     \label{fig:small_object_convergence_curves}
 \end{figure}
 
@@ -370,7 +370,7 @@
 \begin{figure}[!t]
     \centering
     \includegraphics[width=\textwidth]{figures/ch4/transparent_object_vs_neus.png}
-    \caption{透明物体几何提取可视化结果对比。第一列为输入 RGB 图像，第二列为 NeuS 的重建结果，第三列为本章算法的重建结果，第四列为对本章算法手动去除外表面后的内部结构可视化结果。图中黑色的片段是自动法线计算过程中部分法向发生翻转所致，并非几何提取错误。}
+    \caption{透明物体重建可视化结果对比图。}
     \label{fig:neus_transparent_pk}
 \end{figure}
 图~\ref{fig:neus_transparent_pk}展示了 NeuS 与本章算法的可视化对比结果，原始 NeuS 在透明区域往往难以得到稳定的零交叉表面，导致最终提取出的网格存在明显的空洞和缺失。相比之下，本章算法通过在绝对距离场上搜索局部极小值，并将透明区域与不透明区域统一纳入同一提取框架，有效缓解了上述问题，并保留较好的内部几何信息。需要说明的是，在结果中可见少量黑色几何片段，这主要是由于自动法向计算过程中部分法向方向发生翻转所致，并非几何提取错误所引起。
@@ -380,7 +380,7 @@
 
 \begin{table}[!t]
 \centering
-\caption{透明物体重建的 Chamfer Distance$\downarrow$对比（单位：mm）}
+\caption{透明物体重建的 Chamfer Distance$\downarrow$对比表（单位：mm）}
 \label{tab:transparent_cd_compare}
 \small
 \setlength{\tabcolsep}{12pt}
@@ -408,7 +408,7 @@ Snowglobe  & 37.2  & \textbf{4.6} \\
 \begin{figure}[!t]
   \centering
   \includegraphics[width=0.9\textwidth,height=0.75\textheight]{figures/ch4/texture_example}
-  \caption{本章算法生成的三维资产示例。}
+  \caption{纹理贴图生成效果图。}
   \label{fig:texture_example}
 \end{figure}
 本节旨在验证所提算法将隐式神经场结果转换为高保真显式三维资产的有效性。图~\ref{fig:texture_example} 展示了本章所提的高保真资产重建算法的重建效果，图中从左到右依次为输入图像、重建得到的三维资产、对应几何模型和纹理贴图。结果表明，本章算法能够将输入图像中的物体重建为较精细的几何模型和纹理贴图。对于苦瓜表面的凹凸细节和牛角包的烘焙纹理特征，算法均能够较准确地刻画。对于玉米的颗粒重复结构，生成的纹理贴图也较好地保留了原始图像中的外观特征，未出现明显的错乱与遗漏。
@@ -420,7 +420,7 @@ Snowglobe  & 37.2  & \textbf{4.6} \\
 \begin{figure}[!t]
   \centering
   \includegraphics[width=0.8\textwidth]{figures/ch4/MeshLab_Compare.png}
-  \caption{MeshLab 与本章算法生成的纹理贴图对比。}
+  \caption{MeshLab 与本章算法生成的纹理贴图对比图。}
   \label{fig:meshlab_compare}
 \end{figure}
 
@@ -431,7 +431,7 @@ Snowglobe  & 37.2  & \textbf{4.6} \\
 
 \begin{table}[!t]
 \centering
-\caption{纹理贴图生成算法的 PSNR$\uparrow$ 对比（单位：dB）}
+\caption{纹理贴图生成算法的 PSNR$\uparrow$ 对比表（单位：dB）}
 \label{tab:texture_psnr_compare}
 \small
 \setlength{\tabcolsep}{5pt}
