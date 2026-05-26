@@ -35,6 +35,9 @@
 
 但直接将 NeuS 算法应用于化学实验资产仍然面临若干问题。首先，化学实验物体中存在大量小尺度目标，这类物体在图像中占据区域较小，随机采样得到的训练光线多数落在背景区域，导致训练初期几何收敛速度较慢。其次，NeuS 的输出本质上仍然是隐式场，而机器人仿真平台和渲染引擎通常需要显式三角网格、标准 UV 坐标和高分辨率纹理贴图，因而需要进一步完成从隐式表示到显式纹理资产的转换。最后，透明玻璃器具作为化学实验场景中的重要物体类型，其表面成像机理更为复杂，基于零等值面的表面提取方式在该类物体上可能存在表面缺失或结构不稳定等问题。
 
+
+
+
 针对上述问题，本章围绕化学实验资产的高保真重建需求，构建了一套基于 NeuS 的完整三维资产重建流程。整体流程如图~\ref{fig:neus_pipeline} 所示，该流程以多视角 RGB 图像作为输入，依次完成数据预处理、隐式场训练、显式网格提取与纹理贴图生成，最终输出可用于仿真平台和渲染引擎的显式三维资产。
 
 \begin{figure}[htbp]
@@ -78,6 +81,86 @@
     \label{fig:neus_noise}
 \end{figure}
 
+
+\subsection{网络训练}
+\ensubsection{Network Training}
+\label{sec:ch4_network_training}
+
+经过数据预处理后，输入多视角图像已经获得对应的相机内参、相机外参、主体 Mask 以及归一化后的场景空间范围。在此基础上，本节进一步介绍基于 NeuS 的网络训练过程。网络训练是整个重建流程中的核心阶段，其目标是在多视角 RGB 图像监督下学习目标物体的隐式几何场与颜色场，为后续网格提取和纹理贴图生成提供连续的三维表示。
+
+本章以 NeuS 作为基础训练框架，将目标物体表示为符号距离场和颜色场的组合。其中，符号距离场用于刻画目标物体表面附近的连续几何结构，颜色场用于建模不同空间位置和观察方向下的外观信息。在训练过程中，网络根据相机参数从图像像素发射光线，并在归一化空间中进行采样，通过可微体渲染得到对应像素的预测颜色。随后，利用预测颜色与输入图像颜色之间的差异对网络进行优化，同时结合主体 Mask 约束和距离场正则项提升几何学习的稳定性。训练完成后，隐式几何场用于后续显式网格提取，隐式颜色场则用于纹理贴图生成阶段的颜色查询。
+
+在化学实验资产重建中，存在不少小尺度物体，它们在图像中仅占据较少像素，例如药匙、橡胶塞、夹具和小型连接件等。对于这类目标，随机采样得到的训练光线中，大量光线落在背景区域或自由空间区域，真正穿过物体表面及轮廓附近的有效光线比例较低，导致训练初期的几何收敛速度较慢。如图~\ref{fig:small_object_pixels} 所示，小物体的有效监督区域较小，网络更容易长时间停留在粗几何尚未稳定的阶段。
+
+\begin{figure}[!t]
+\centering
+\begin{subfigure}[b]{0.32\textwidth}
+\centering
+\includegraphics[width=\textwidth]{figures/ch4/small_object_1}
+\caption{}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.32\textwidth}
+\centering
+\includegraphics[width=\textwidth]{figures/ch4/small_object_2}
+\caption{}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.32\textwidth}
+\centering
+\includegraphics[width=\textwidth]{figures/ch4/small_object_3}
+\caption{}
+\end{subfigure}
+\caption{小物体示意图。小物体仅覆盖图像中的较小区域，导致有效监督信号较为稀疏。}
+\label{fig:small_object_pixels}
+\end{figure}
+
+从训练过程来看，NeuS 的几何演化通常可以理解为三个阶段。如图~\ref{fig:neus_three_stage} 所示，网络首先从初始化的单位球出发，随后在过渡态中逐步收缩为目标物体的粗略几何，最后进入学习态以刻画表面细节。对于小物体而言，由于训练早期能够提供有效几何信息的光线数量有限，网络往往需要更多迭代才能完成从初始单位球到粗略物体形状的收敛。若大量训练预算被消耗在过渡态中，后续用于细节学习的有效迭代就会减少，从而影响最终几何质量。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/ch4/NeuS_three_tai.png}
+\caption{NeuS 训练过程中的几何演化图。训练通常遵循从初始单位球到粗略几何，再到精细表面刻画的演化路径。}
+\label{fig:neus_three_stage}
+\end{figure}
+
+针对上述问题，本章在网络训练阶段引入学习态增强策略。该策略的核心思想是根据训练进度动态调节射线方向与 SDF 梯度方向之间的约束强度，使网络在训练初期能够更快形成稳定的粗几何，并在训练后期逐步转向精细表面优化。设当前采样点为 $\mathbf{x}$，对应射线方向为 $\mathbf{d}$，SDF 梯度为 $\nabla f_{\theta}(\mathbf{x})$。首先定义射线方向与局部 SDF 梯度之间的方向一致性量
+\begin{equation}
+    \cos_t =
+    \mathbf{d}\cdot \nabla f_{\theta}(\mathbf{x}).
+\end{equation}
+其中，$\nabla f_{\theta}(\mathbf{x})$ 可以看作隐式表面在局部位置的法向方向，因此 $\cos_t$ 反映了当前采样方向与局部几何变化趋势之间的关系。
+
+为了使方向约束适应不同训练阶段，本章进一步引入训练进度因子 $\cos_a$
+\begin{equation}
+\cos_{a}= 
+\begin{cases}
+1, & \text{if } \text{cos\_step\_end}=0,\\[3pt]
+\min\left(1,\dfrac{\text{cur\_step}}{\text{cos\_step\_end}}\right), & \text{otherwise}.
+\end{cases}
+\end{equation}
+其中，$\text{cur\_step}$ 表示当前训练步数，$\text{cos\_step\_end}$ 表示阶段切换的控制参数。训练初期 $\cos_a$ 较小，网络采用更宽松的方向引导以促进粗几何快速形成。随着训练推进，$\cos_a$ 逐渐增大并趋近于 $1$，方向约束逐步增强，使网络更加关注表面定位精度与几何细节刻画。
+
+在此基础上，定义自适应采样因子
+\begin{equation}
+    \cos_i =
+    (1-\cos_a)\cos_i^{\mathrm{soft}}
+    + \cos_a \cos_i^{\mathrm{hard}},
+\end{equation}
+其中，$\cos_i^{\mathrm{soft}}$ 表示宽松模式下的方向项，$\cos_i^{\mathrm{hard}}$ 表示严格模式下的方向项。训练初期，$\cos_i$ 更接近宽松模式，有助于缓解小物体监督稀疏带来的粗几何收敛缓慢问题。训练后期，$\cos_i$ 更接近严格模式，有助于提升表面位置估计的准确性。
+
+最后，将自适应采样因子用于相邻采样区间两端的 SDF 估计
+\begin{equation}
+\begin{cases}
+\mathrm{SDF}_{\mathrm{next}} =
+\mathrm{SDF} + \cos_i D,\\
+\mathrm{SDF}_{\mathrm{prev}} =
+\mathrm{SDF} - \cos_i D,
+\end{cases}
+\end{equation}
+其中，$D$ 表示当前采样区间长度。该估计方式能够根据当前训练阶段和局部几何状态调节 SDF 变化幅度。在几何趋势较明确时，网络可以更快完成表面位置收敛。在几何尚不稳定时，较为保守的更新方式可以避免过大的位置偏移。通过这种方式，学习态增强策略能够缩短小物体训练中的过渡阶段，使网络更早进入细节学习阶段，并为后续网格提取和纹理贴图生成提供更稳定的隐式场。
+
+综上，网络训练阶段首先利用多视角图像、相机参数和主体 Mask 对 NeuS 的几何场与颜色场进行联合优化，得到连续的 SDF 表示和隐式颜色表示。在此基础上，针对化学实验小物体像素占比较低、监督信号稀疏的问题，进一步引入学习态增强策略，提高训练初期粗几何形成效率。训练完成后，得到的 SDF 场可用于后续显式网格提取，颜色场则为纹理贴图生成提供颜色查询基础，从而衔接本章 pipeline 中的网格提取和纹理贴图生成模块。
 
 \subsection{面向透明物体的几何表面提取}
 \ensubsection{Geometry Surface Extraction for Transparent Objects}
