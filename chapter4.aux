@@ -58,13 +58,82 @@
 \@writefile{etoc}{\contentsline {subsection}{\numberline {4.3.1}Experimental Setup}{67}{subsection.4.3.1}\protected@file@percent }
 \citation{cignoni2008meshlab}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.3.2}几何重建实验分析}{68}{subsection.4.3.2}\protected@file@percent }
-\@writefile{etoc}{\contentsline {subsection}{\numberline {4.3.2}Reconstruction Results and Convergence Analysis on Small Objects}{68}{subsection.4.3.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {4.9}{\ignorespaces 小物体重建阶段结果可视化对比。}}{68}{figure.caption.38}\protected@file@percent }
-\newlabel{fig:neus_small_object_pk}{{4.9}{68}{小物体重建阶段结果可视化对比。}{figure.caption.38}{}}
+\@writefile{etoc}{\contentsline {subsection}{\numberline {4.3.2}Geometric Reconstruction Experimental Analysis}{68}{subsection.4.3.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.9}{\ignorespaces 小物体重建阶段结果可视化对比。}}{69}{figure.caption.38}\protected@file@percent }
+\newlabel{fig:neus_small_object_pk}{{4.9}{69}{小物体重建阶段结果可视化对比。}{figure.caption.38}{}}
 \newlabel{fig:psnr_curve_sub}{{4.10a}{69}{PSNR}{figure.caption.39}{}}
 \newlabel{sub@fig:psnr_curve_sub}{{a}{69}{PSNR}{figure.caption.39}{}}
 \newlabel{fig:ssim_curve_sub}{{4.10b}{69}{SSIM}{figure.caption.39}{}}
 \newlabel{sub@fig:ssim_curve_sub}{{b}{69}{SSIM}{figure.caption.39}{}}
 \newlabel{fig:lpips_curve_sub}{{4.10c}{69}{LPIPS}{figure.caption.39}{}}
 \newlabel{sub@fig:lpips_curve_sub}{{c}{69}{LPIPS}{figure.caption.39}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4.10}{\ignorespaces 小物体重建过程中PSNR、SSIM 和 LPIPS 随训练迭代步数的变化曲线对比。}}{69}{figure.caption.39}\protect
+\@writefile{lof}{\contentsline {figure}{\numberline {4.10}{\ignorespaces 小物体重建过程中PSNR、SSIM 和 LPIPS 随训练迭代步数的变化曲线对比。}}{69}{figure.caption.39}\protected@file@percent }
+\newlabel{fig:small_object_convergence_curves}{{4.10}{69}{小物体重建过程中PSNR、SSIM 和 LPIPS 随训练迭代步数的变化曲线对比。}{figure.caption.39}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.11}{\ignorespaces 透明物体几何提取可视化结果对比。第一列为输入 RGB 图像，第二列为 NeuS 的重建结果，第三列为本章算法的重建结果，第四列为对本章算法手动去除外表面后的内部结构可视化结果。图中黑色的片段是自动法线计算过程中部分法向发生翻转所致，并非几何提取错误。}}{70}{figure.caption.40}\protected@file@percent }
+\newlabel{fig:neus_transparent_pk}{{4.11}{70}{透明物体几何提取可视化结果对比。第一列为输入 RGB 图像，第二列为 NeuS 的重建结果，第三列为本章算法的重建结果，第四列为对本章算法手动去除外表面后的内部结构可视化结果。图中黑色的片段是自动法线计算过程中部分法向发生翻转所致，并非几何提取错误。}{figure.caption.40}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.1}{\ignorespaces 透明物体重建的 Chamfer Distance$\downarrow $对比（单位：mm）}}{71}{table.caption.41}\protected@file@percent }
+\newlabel{tab:transparent_cd_compare}{{4.1}{71}{透明物体重建的 Chamfer Distance$\downarrow $对比（单位：mm）}{table.caption.41}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.3}纹理贴图生成实验分析}{71}{subsection.4.3.3}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {4.3.3}3D Asset Reconstruction Results and Analysis}{71}{subsection.4.3.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.12}{\ignorespaces 本章算法生成的三维资产示例。}}{72}{figure.caption.42}\protected@file@percent }
+\newlabel{fig:texture_example}{{4.12}{72}{本章算法生成的三维资产示例。}{figure.caption.42}{}}
+\citation{muller2022instantngp,Li_2023_CVPR,Wang_2023_ICCV}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.13}{\ignorespaces MeshLab 与本章算法生成的纹理贴图对比。}}{73}{figure.caption.43}\protected@file@percent }
+\newlabel{fig:meshlab_compare}{{4.13}{73}{MeshLab 与本章算法生成的纹理贴图对比。}{figure.caption.43}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.4}局限性分析}{73}{subsection.4.3.4}\protected@file@percent }
+\@writefile{etoc}{\contentsline {subsection}{\numberline {4.3.4}Limitations Analysis}{73}{subsection.4.3.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4.2}{\ignorespaces 纹理贴图生成算法的 PSNR$\uparrow $ 对比（单位：dB）}}{74}{table.caption.44}\protected@file@percent }
+\newlabel{tab:texture_psnr_compare}{{4.2}{74}{纹理贴图生成算法的 PSNR$\uparrow $ 对比（单位：dB）}{table.caption.44}{}}
+\citation{muller2022instantngp,Li_2023_CVPR,Wang_2023_ICCV}
+\@writefile{toc}{\contentsline {section}{\numberline {4.4}本章小结}{76}{section.4.4}\protected@file@percent }
+\@writefile{etoc}{\contentsline {section} {\numberline {\sffamily  4.4}Summary} {76}{section.4.4}}
+\@setckpt{chapters/chapter4}{
+\setcounter{page}{79}
+\setcounter{equation}{5}
+\setcounter{enumi}{2}
+\setcounter{enumii}{0}
+\setcounter{enumiii}{0}
+\setcounter{enumiv}{0}
+\setcounter{footnote}{0}
+\setcounter{mpfootnote}{0}
+\setcounter{parentequation}{0}
+\setcounter{AM@survey}{0}
+\setcounter{part}{0}
+\setcounter{chapter}{4}
+\setcounter{section}{4}
+\setcounter{subsection}{0}
+\setcounter{subsubsection}{0}
+\setcounter{paragraph}{0}
+\setcounter{subparagraph}{0}
+\setcounter{figure}{13}
+\setcounter{table}{2}
+\setcounter{blankpage}{1}
+\setcounter{float@type}{16}
+\setcounter{algorithm}{5}
+\setcounter{ALC@unique}{123}
+\setcounter{ALC@line}{17}
+\setcounter{ALC@rem}{0}
+\setcounter{ALC@depth}{0}
+\setcounter{algo}{0}
+\setcounter{thm}{0}
+\setcounter{defn}{0}
+\setcounter{conj}{0}
+\setcounter{exmp}{0}
+\setcounter{rem}{0}
+\setcounter{case}{0}
+\setcounter{caption@flags}{2}
+\setcounter{continuedfloat}{0}
+\setcounter{subfigure}{0}
+\setcounter{subtable}{0}
+\setcounter{lstnumber}{1}
+\setcounter{section@level}{0}
+\setcounter{Item}{8}
+\setcounter{Hfootnote}{0}
+\setcounter{Hy@AnnotLevel}{0}
+\setcounter{bookmark@seq@number}{57}
+\setcounter{pp@a@footnote}{4}
+\setcounter{LT@tables}{0}
+\setcounter{LT@chunks}{0}
+\setcounter{NAT@ctr}{0}
+\setcounter{lstlisting}{0}
+}
