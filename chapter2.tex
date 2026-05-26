@@ -133,29 +133,29 @@ W_2\,\sigma(W_1\text{x}+b_1)+b_2,
 
 遗传算法首先需要建立问题解到染色体编码之间的映射。对于给定优化问题，可将一个候选解记为个体
 \begin{equation}
-\text{x} = (x_1, x_2, \dots, x_L)
+\text{x} = (x_1, x_2, \dots, x_L),
 \label{eq:ga_individual}
 \end{equation}
 其中各维变量经过适当编码后构成长度为 $L$ 的染色体。经典遗传算法通常采用二进制串表示，即
 \begin{equation}
-\text{x} \in \{0,1\}^{L}
+\text{x} \in \{0,1\}^{L},
 \label{eq:ga_binary_encoding}
 \end{equation}
 每一个基因位对应解空间中的一个影响因子。多个个体共同组成种群
 \begin{equation}
-P^{(t)}=\{\text{x}_1^{(t)}, \text{x}_2^{(t)}, \dots, \text{x}_N^{(t)}\}
+P^{(t)}=\{\text{x}_1^{(t)}, \text{x}_2^{(t)}, \dots, \text{x}_N^{(t)}\},
 \label{eq:ga_population}
 \end{equation}
 其中 $t$ 表示当前迭代代数，$N$ 表示种群规模。这种以种群为单位的机制，使得遗传算法在整个候选解集合上并行搜索，因此具有较强的全局探索能力，能够有效避免陷入局部最优，适合于复杂的组合优化问题。
 
 为了比较不同个体的优劣，遗传算法为每个个体定义适应度函数
 \begin{equation}
-F(\text{x}) \ge 0
+F(\text{x}) \ge 0,
 \label{eq:ga_fitness}
 \end{equation}
 其数值用于衡量该个体对当前优化目标的匹配程度。若原问题为最大化问题，则适应度函数通常可直接由目标函数构造。若原问题为最小化问题，则可通过单调变换将其转化为适应度越大表示个体越优的形式。在第 $t$ 代种群中，个体 $\text{x}_i^{(t)}$ 的相对适应度决定了其被保留与参与繁殖的概率，因此适应度评估构成了整个遗传搜索过程的驱动力。对于标准比例选择，个体被选中的概率可写为
 \begin{equation}
-p_i^{(t)}=\frac{F(\text{x}_i^{(t)})}{\sum_{j=1}^{N}F(\text{x}_j^{(t)})}
+p_i^{(t)}=\frac{F(\text{x}_i^{(t)})}{\sum_{j=1}^{N}F(\text{x}_j^{(t)})}.
 \label{eq:ga_selection_probability}
 \end{equation}
 
@@ -173,16 +173,16 @@ p_i^{(t)}=\frac{F(\text{x}_i^{(t)})}{\sum_{j=1}^{N}F(\text{x}_j^{(t)})}
 交叉（Crossover）是遗传算法区别于一般随机搜索算法的关键机制之一。其基本思想是：从两个父代染色体中交换部分基因片段，从而生成新的子代个体。对于长度为 $L$ 的二进制串，在最简单的单点交叉中，设随机交叉位置为 $k$，则两个父代可表示为
 \begin{equation}
 \begin{aligned}
-\text{x}_a^{(t)} &= (x_1, \dots, x_k, x_{k+1}, \dots, x_L) \\
-\text{x}_b^{(t)} &= (y_1, \dots, y_k, y_{k+1}, \dots, y_L)
+\text{x}_a^{(t)} &= (x_1, \dots, x_k, x_{k+1}, \dots, x_L), \\
+\text{x}_b^{(t)} &= (y_1, \dots, y_k, y_{k+1}, \dots, y_L),
 \end{aligned}
 \label{eq:ga_parents}
 \end{equation}
 相应地，可产生两个子代
 \begin{equation}
 \begin{aligned}
-\text{z}_1 &= (x_1, \dots, x_k, y_{k+1}, \dots, y_L) \\
-\text{z}_2 &= (y_1, \dots, y_k, x_{k+1}, \dots, x_L)
+\text{z}_1 &= (x_1, \dots, x_k, y_{k+1}, \dots, y_L), \\
+\text{z}_2 &= (y_1, \dots, y_k, x_{k+1}, \dots, x_L).
 \end{aligned}
 \label{eq:ga_offspring}
 \end{equation}
@@ -190,7 +190,7 @@ p_i^{(t)}=\frac{F(\text{x}_i^{(t)})}{\sum_{j=1}^{N}F(\text{x}_j^{(t)})}
 
 变异（Mutation）用于在较低概率下对个体的局部基因进行随机修改，以补充交叉操作难以提供的新信息。对于二进制编码，最常见的变异方式是按位翻转，即对某一位基因执行
 \begin{equation}
-x_j \leftarrow 1-x_j
+x_j \leftarrow 1-x_j,
 \label{eq:ga_mutation}
 \end{equation}
 若每个位独立以概率 $p_m$ 发生变异，则变异操作能够不断向种群注入新的局部模式，从而维持搜索空间的可达性与群体多样性。经典遗传算法通常将交叉作为主要的结构重组机制，将变异作为防止种群退化与避免早熟收敛的辅助机制。图~\ref{fig:ga_crossover_and_mutate} 给出了遗传算法中交叉与变异操作的示意：其中交叉通过交换两个父代个体的局部基因片段形成新个体，而变异则通过对局部基因位的随机翻转引入新的搜索方向。
@@ -208,14 +208,14 @@ P^{(t)}
 \rightarrow \mathrm{Selection}
 \rightarrow \mathrm{Crossover}
 \rightarrow \mathrm{Mutation}
-\rightarrow P^{(t+1)}
+\rightarrow P^{(t+1)}.
 \label{eq:ga_evolution_chain}
 \end{equation}
 随着迭代进行，群体中高适应度个体的比例通常逐步提高，搜索过程由此呈现出从随机探索到定向优化的演化趋势。标准遗传算法的终止条件通常包括达到最大迭代次数、最优个体长期不再改进，或适应度达到预设阈值等。
 
 在二进制编码下，模式可记为
 \begin{equation}
-H=(h_1, h_2, \dots, h_L), \qquad h_i \in \{0,1,*\}
+H=(h_1, h_2, \dots, h_L), \qquad h_i \in \{0,1,*\},
 \label{eq:ga_schema}
 \end{equation}
 其中符号 $*$ 表示该位可以取任意值，因此一个模式实际上对应解空间中一组具有相似结构的染色体。设 $m(H,t)$ 表示第 $t$ 代种群中属于模式 $H$ 的个体数量，$\bar{f}(H,t)$ 表示该模式实例的平均适应度，$\bar{f}(t)$ 表示整个人群的平均适应度。再记模式的定义长度为 $\delta(H)$，固定位置个数为 $o(H)$，交叉概率为 $p_c$，变异概率为 $p_m$，则经典模式定理给出下一代中该模式期望复制数量的下界：
@@ -224,7 +224,7 @@ E[m(H,t+1)] \ge
 m(H,t)\frac{\bar{f}(H,t)}{\bar{f}(t)}
 \left(
 1-p_c\frac{\delta(H)}{L-1}-o(H)p_m
-\right)
+\right),
 \label{eq:ga_schema_theorem}
 \end{equation}
 这一结果表明：当某一低阶、短定义长度且平均适应度高于群体平均水平的模式出现时，它在选择作用下更容易得到扩增，而在交叉和变异中的被破坏概率相对较低，因此会在后续代际中以更高概率持续传播。模式定理为遗传算法为何能够通过局部优良结构的保留与重组实现逐步优化，提供了经典的理论解释。
@@ -439,7 +439,6 @@ CLIP 分数\cite{hessel2021clipscore}（CLIP Score）是一种用于衡量图像
 \frac{N_{\mathrm{match}}}{N_{\mathrm{required}}}.
 \label{eq:key_object_coverage}
 \end{equation}
-
 其中，$N_{\mathrm{required}}$ 表示参考物品集合中要求包含的关键物品总数，$N_{\mathrm{match}}$ 表示生成结果中成功出现并与参考集合语义对应的关键物品数量。该指标的取值范围通常为 $[0,1]$。其值越高，表明生成结果对目标关键物品的覆盖越完整。反之，则表明生成过程中存在物体遗漏或内容缺失现象。
 
 关键物品覆盖率能够较为直接地反映模型在对象层面对输入条件的满足能力，尤其适合用于评价生成结果中“应出现的物体是否被生成”这一问题。在文本驱动的三维场景生成任务中，该指标可用于分析模型对核心对象、功能性物体或约束指定物品的保留能力，从而补充整体语义相似度指标对局部对象完整性刻画不足的问题。
