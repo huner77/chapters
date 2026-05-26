@@ -9,7 +9,7 @@
 \enchapter[High-Fidelity 3D Reconstruction via Implicit Neural Fields]{High-Fidelity 3D Reconstruction of Chemical Apparatus Based on Implicit Neural Fields}
 \label{chap:high_fidelity_reconstruction}
 
-本章围绕不同类型化学资产统一重建这一目标，提出了一种基于隐式神经场 NeuS 的高保真化学资产重建算法。该算法利用多视角 RGB 图像恢复物体几何，并构建了一个包含数据预处理、隐式场训练、网格提取与优化和纹理贴图生成的完整重建流程。
+本章围绕不同类型化学资产统一重建需求，提出了一种基于隐式神经场 NeuS 的高保真化学资产重建算法。该算法利用多视角 RGB 图像恢复物体几何，并构建了一个包含数据预处理、隐式场训练、网格提取与优化和纹理贴图生成的完整重建流程。
 在透明物体场景下，传统 NeuS 直接以零等值面作为目标表面的做法容易失效，因为透明区域的最大渲染权重并不总与零交叉位置一致，从而导致表面缺失。针对这一问题，本章从透明与不透明区域混合存在的几何特性出发，采用基于绝对距离场局部极小值搜索的统一表面提取策略，实现了对表面的稳定重建。
 此外，考虑到小物体在输入图像中像素占比较低、监督信号稀疏，NeuS 训练过程容易长时间停留在过渡态，本章进一步提出学习态增强策略，以加速训练初期的形状收敛，并为后续高频几何细节的刻画预留更多有效迭代。
 在纹理重建方面，针对 NeuS 隐式表示难以直接满足仿真平台对显式纹理资产需求的问题，本章构建了一条从 NeuS 隐式颜色场到高分辨率纹理贴图的自动化生成算法，通过 Xatlas 完成 UV 参数化，结合光栅化烘焙、形态学修复与 KNN 补全生成高精度纹理贴图。
@@ -23,7 +23,7 @@
 
 \begin{figure}[!t]
   \centering
-  \includegraphics[width=0.9\textwidth]{figures/ch4/chemical_object_taxonomy}
+  \includegraphics[width=\textwidth]{figures/ch4/lab_object}
   \caption{化学实验物体分类体系图。}
   \label{fig:chemical_object_taxonomy}
 \end{figure}
@@ -186,7 +186,7 @@
 
 
 \begin{algorithm}[!t]
-\caption{Surface Extraction for Transparent Objects}
+\caption{透明物体表面提取算法流程}
 \label{algo:transparent_surface_extraction}
 \begin{algorithmic}[1]
 \STATE \textbf{Stage I: Initial Enclosing Mesh Extraction}
@@ -257,7 +257,7 @@
 针对这一问题，本章提出了针对 NeuS 神经隐式场到显式纹理资产的自动化生成流程，其核心思路如图~\ref{fig:xatlas_stage_pk}和流程\ref{algo:neus_texture_generation_en} 所示。
 
 \begin{algorithm}[htbp]
-\caption{High-Resolution Texture Asset Generation Based on NeuS}
+\caption{纹理生成算法流程}
 \label{algo:neus_texture_generation_en}
 \begin{algorithmic}[1]
 
