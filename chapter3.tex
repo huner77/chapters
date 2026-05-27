@@ -181,7 +181,7 @@
 在生成完整的平滑相机轨迹 $\Gamma_{\text{full}}$ 后，由于其存在较高的信息冗余与序列过长，会给用户带来过大的浏览负担，不适合直接将其作为最终展示路径，因此需要对该轨迹进行精简，找到最佳的子轨迹。
 
 \begin{algorithm}[!t]
-\caption{Camera Planning for Scene Visualization}
+\caption{面向场景展示的相机规划算法}
 \label{algo:camera_planning}
 \begin{algorithmic}[1]
 
@@ -342,6 +342,12 @@ X_c = \textsc{Crossover}(X_1, X_2) = (O_c, G_c),
 \end{equation}
 其中，$\textsc{Crossover}(\cdot)$ 表示语义感知交叉算子，$X_c$ 为生成的子代。相比于传统进化算法中随机交换方式，该算子利用大语言模型的语义推理能力，提取父代场景中表现优异的局部设计特征进行重新组合，生成新的物体集合 $O_c$ 与布局约束图 $G_c$。图 \ref{fig:diverse_cross} 展示了该算子在处理不同布局风格时的重组能力，通过融合不同父代的设计特征，生成的子代展现出了显著的设计差异。
 
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\textwidth]{figures/ch3/mutate_furniture}
+\caption{大语言模型驱动的变异结果图。}
+\label{fig:mutate_furniture}
+\end{figure}
 
 \noindent\textbf{变异算子：}
 变异算子的目标是在维持场景基本合理性的前提下，通过引入适度扰动来探索搜索空间中的潜在布局方案，生成形态各异且安全可用的实验场景，如图 \ref{fig:mutate_furniture} 所示，大语言模型驱动的变异算子在场景整体设计风格不变的前提下，通过调整物体属性与空间关系，生成多样化的布局方案。本章将变异过程定义为：
@@ -353,13 +359,6 @@ X'_c = \textsc{Mutate}(X_c) = (O'_c, G'_c),
 \item \textbf{物体变异 ($O_c \rightarrow O'_c$)：} 对 $O_c$ 中的非核心资产进行增删或同类语义替换。
 \item \textbf{约束图变异 ($G_c \rightarrow G'_c$)：} 对约束图的拓扑边进行局部调整。这包括微调物体间的距离等级，或增减方位约束。
 \end{enumerate}
-
-\begin{figure}[!t]
-\centering
-\includegraphics[width=\textwidth]{figures/ch3/mutate_furniture}
-\caption{大语言模型驱动的变异结果图。}
-\label{fig:mutate_furniture}
-\end{figure}
 
 在完成交叉和变异后，系统需进一步将生成的中间表征 $(O'_c, G'_c)$ 转换为新的候选场景。若物体清单 $O'_c$ 发生变更，系统将优先从父代 $G_1$、$G_2$ 中检索并继承相关的空间约束关系，对于父代未包含的新增物体或失效的约束关系，则调用第 \ref{sec:llm_gen_scene} 节所述的场景生成算法，由大语言模型基于化学常识补齐约束关系。若 $O'_c$ 保持不变，仅在语义层面融合了不同的布局倾向，则直接基于更新后的约束图 $G'_c$ 进行布局求解。通过这种方式，不仅能够在局部设计层面实现优良特征的传递与重组，还能在全局布局层面保持安全约束的连续性与合理性，从而生成既多样又高质量的场景方案。
 

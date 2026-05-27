@@ -96,38 +96,44 @@
 
 在化学实验资产重建中，存在不少小物体，它们在图像中仅占据较少像素，例如药匙、橡胶塞、夹具和小型连接件等。对于这类目标，随机采样得到的训练光线中，大量光线落在背景区域或自由空间区域，真正穿过物体表面及轮廓附近的有效光线比例较低，导致训练初期的几何收敛速度较慢。如图~\ref{fig:small_object_pixels} 所示，小物体仅覆盖图像中的较小区域，导致有效监督信号较为稀疏，网络更容易长时间停留在粗几何尚未稳定的阶段。
 
+% \begin{figure}[!t]
+% \centering
+% \begin{subfigure}[b]{0.32\textwidth}
+% \centering
+% \includegraphics[width=\textwidth]{figures/ch4/small_object_1}
+% \caption{}
+% \end{subfigure}
+% \hfill
+% \begin{subfigure}[b]{0.32\textwidth}
+% \centering
+% \includegraphics[width=\textwidth]{figures/ch4/small_object_2}
+% \caption{}
+% \end{subfigure}
+% \hfill
+% \begin{subfigure}[b]{0.32\textwidth}
+% \centering
+% \includegraphics[width=\textwidth]{figures/ch4/small_object_3}
+% \caption{}
+% \end{subfigure}
+% \caption{小物体示意图。}
+% \label{fig:small_object_pixels}
+% \end{figure}
+
+
 \begin{figure}[!t]
-\centering
-\begin{subfigure}[b]{0.32\textwidth}
-\centering
-\includegraphics[width=\textwidth]{figures/ch4/small_object_1}
-\caption{}
-\end{subfigure}
-\hfill
-\begin{subfigure}[b]{0.32\textwidth}
-\centering
-\includegraphics[width=\textwidth]{figures/ch4/small_object_2}
-\caption{}
-\end{subfigure}
-\hfill
-\begin{subfigure}[b]{0.32\textwidth}
-\centering
-\includegraphics[width=\textwidth]{figures/ch4/small_object_3}
-\caption{}
-\end{subfigure}
-\caption{小物体示意图。}
-\label{fig:small_object_pixels}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/ch4/small_object.png}
+    \caption{小物体示意图。}
+    \label{fig:small_object_pixels}
 \end{figure}
 
 从训练过程来看，NeuS 的几何演化通常可以理解为三个阶段。如图~\ref{fig:neus_three_stage} 所示，网络首先从初始化的单位球出发，随后在过渡态中逐步收缩为目标物体的粗略几何，最后进入学习态以刻画表面细节。对于小物体而言，由于训练早期能够提供有效几何信息的光线数量有限，网络往往需要更多迭代才能完成从初始单位球到粗略物体形状的收敛。若大量训练预算被消耗在过渡态中，后续用于细节学习的有效迭代就会减少，从而影响最终几何质量。
-
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\textwidth]{figures/ch4/NeuS_three_tai.png}
+\includegraphics[width=0.9\textwidth]{figures/ch4/NeuS_three_tai.png}
 \caption{NeuS 训练过程中的几何演化图。}
 \label{fig:neus_three_stage}
 \end{figure}
-
 针对上述问题，本章在网络训练阶段引入学习态增强策略。该策略旨在针对小物体训练早期有效监督不足的问题，通过动态调节采样方向与有符号距离函数梯度方向的权重，引导网络更快完成初始形状收敛，缩短过渡态持续时间，从而尽早进入面向细节优化的学习态，并为高保真几何重建预留更充分的有效迭代空间。
 
 设当前采样点为 $\mathbf{x}$，对应射线方向为 $\mathbf{d}$，有符号距离函数（Signed Distance Function, SDF）记为 $f(\mathbf{x})$。为了刻画当前射线传播方向与局部几何法向之间的关系，首先定义射线方向与 SDF 梯度之间的方向一致性量 $\cos_t$：
@@ -242,6 +248,8 @@
 \subsection{纹理贴图生成}
 \ensubsection{High-Resolution Texture Asset Generation Algorithm}
 
+在机器人仿真平台~\cite{kolve2017ai2thor,savva2019habitat,shen2021igibson,gu2023maniskill2,li2024chemistry3d,li2025labutopia}中，场景中的物体通常需要以显式三维资产的形式存在，即三维资产不仅要包含显式几何网格，还需要具备材质与纹理信息，以支持渲染、碰撞检测等功能。然而，NeuS 作为一种隐式神经表面重建算法，尽管能够生成高质量的几何表面与颜色信息，但其几何与颜色主要编码在神经网络参数中，难以直接应用到主流机器人仿真平台中。
+
 \begin{figure}[!t]
 \centering
 \includegraphics[width=\textwidth]{figures/ch4/Xatlas_Stage_PK.png}
@@ -249,10 +257,9 @@
 \label{fig:xatlas_stage_pk}
 \end{figure}
 
-在机器人仿真平台~\cite{kolve2017ai2thor,savva2019habitat,shen2021igibson,gu2023maniskill2,li2024chemistry3d,li2025labutopia}中，场景中的物体通常需要以显式三维资产的形式存在，即三维资产不仅要包含显式几何网格，还需要具备材质与纹理信息，以支持渲染、碰撞检测等功能。然而，NeuS 作为一种隐式神经表面重建算法，尽管能够生成高质量的几何表面与颜色信息，但其几何与颜色主要编码在神经网络参数中，难以直接应用到主流机器人仿真平台中。
-
 
 针对这一问题，本章提出了针对 NeuS 神经隐式场到显式纹理资产的自动化生成流程，其核心思路如图~\ref{fig:xatlas_stage_pk}和流程\ref{algo:neus_texture_generation_en} 所示。
+在第~\ref{sec:ch4_mesh_extraction} 节中，完成顶点颜色提取后，需要进一步建立三维表面与二维纹理空间之间的映射关系，即生成纹理坐标（UV）。为此，本章引入 Xatlas~\cite{young_xatlas}开源纹理生成库对显式网格进行自动参数化处理，其核心过程如图~\ref{fig:xatlas_uv} 所示。该算法首先依据网格的曲率分布与局部几何特征，对复杂表面进行自动化分块（Charts），再通过基于几何代价的切割与布局优化，将这些局部表面展开并紧凑排列到统一的二维纹理坐标空间中。该过程为后续将三维表面的颜色信息映射到二维纹理图像奠定了几何基础。
 
 \begin{algorithm}[htbp]
 \caption{纹理生成算法流程}
@@ -285,7 +292,7 @@
 \end{algorithmic}
 \end{algorithm}
 
-在第~\ref{sec:ch4_mesh_extraction} 节中，完成顶点颜色提取后，需要进一步建立三维表面与二维纹理空间之间的映射关系，即生成纹理坐标（UV）。为此，本章引入 Xatlas~\cite{young_xatlas}开源纹理生成库对显式网格进行自动参数化处理，其核心过程如图~\ref{fig:xatlas_uv} 所示。该算法首先依据网格的曲率分布与局部几何特征，对复杂表面进行自动化分块（Charts），再通过基于几何代价的切割与布局优化，将这些局部表面展开并紧凑排列到统一的二维纹理坐标空间中。该过程为后续将三维表面的颜色信息映射到二维纹理图像奠定了几何基础。
+在确定 UV 映射关系后，重建流程进入颜色烘焙与光栅化阶段。本章在纹理空间中对每个三角面片执行光栅化操作，并利用重心坐标插值将面片三个顶点上的颜色连续映射到对应的二维像素区域。通过这一过程，原本定义在离散网格顶点上的颜色信息被转化为连续分布在纹理平面中的像素颜色，从而实现了从顶点着色到标准二维纹理贴图的转换。然而，由于光栅化精度限制以及 UV 分块边界处的对齐误差，初步生成的纹理贴图中往往仍会残留少量未被赋色的像素区域，表现为局部的微小黑洞或纹理缺口。
 
 \begin{figure}[htbp]
 \centering
@@ -293,18 +300,13 @@
 \caption{UV 坐标生成流程图。}
 \label{fig:xatlas_uv}
 \end{figure}
-
-在确定 UV 映射关系后，重建流程进入颜色烘焙与光栅化阶段。本章在纹理空间中对每个三角面片执行光栅化操作，并利用重心坐标插值将面片三个顶点上的颜色连续映射到对应的二维像素区域。通过这一过程，原本定义在离散网格顶点上的颜色信息被转化为连续分布在纹理平面中的像素颜色，从而实现了从顶点着色到标准二维纹理贴图的转换。然而，由于光栅化精度限制以及 UV 分块边界处的对齐误差，初步生成的纹理贴图中往往仍会残留少量未被赋色的像素区域，表现为局部的微小黑洞或纹理缺口。
-
+针对上述光栅化后残留的局部空洞问题，本章进一步设计了纹理修复步骤。如图~\ref{fig:xatlas_png} 所示，首先通过形态学膨胀操作引导边缘颜色向邻域适度扩展，以减轻小尺度边界裂缝带来的纹理断裂。随后，对仍未被赋色的像素应用 KNN 搜索，在纹理平面中检索距离该空洞像素最近的有效采样点，并基于邻域颜色对其进行插值补全。通过上述处理，本章能够有效修复 UV 分块边界附近和局部采样不足区域所产生的纹理缺失，从而最终生成连续性更好、可直接应用于仿真平台与图形学渲染系统的高分辨率纹理贴图。
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.8\textwidth]{figures/ch4/Xatlas_PNG.png}
 \caption{纹理贴图生成流程图。}
 \label{fig:xatlas_png}
 \end{figure}
-
-针对上述光栅化后残留的局部空洞问题，本章进一步设计了纹理修复步骤。如图~\ref{fig:xatlas_png} 所示，首先通过形态学膨胀操作引导边缘颜色向邻域适度扩展，以减轻小尺度边界裂缝带来的纹理断裂。随后，对仍未被赋色的像素应用 KNN 搜索，在纹理平面中检索距离该空洞像素最近的有效采样点，并基于邻域颜色对其进行插值补全。通过上述处理，本章能够有效修复 UV 分块边界附近和局部采样不足区域所产生的纹理缺失，从而最终生成连续性更好、可直接应用于仿真平台与图形学渲染系统的高分辨率纹理贴图。
-
 
 \section{实验结果与分析}
 \ensection{Experimental Results and Analysis}
@@ -412,8 +414,6 @@ Snowglobe  & 37.2  & \textbf{4.6} \\
 本节纹理贴图生成实验主要用于验证从 NeuS 隐式神经场到显式纹理资产转换流程的有效性，因此选取具有复杂表面纹理和高频外观细节的物体进行测试。该组实验重点评估复杂纹理情况下本文算法的纹理生成效果，而非限定于化学实验物体。
 
 图~\ref{fig:texture_example} 展示了本章所提的高保真资产重建算法的重建效果，图中从左到右依次为输入图像、重建得到的三维资产、对应几何模型和纹理贴图。结果表明，本章算法能够将输入图像中的物体重建为较精细的几何模型和纹理贴图。对于苦瓜表面的凹凸细节和牛角包的烘焙纹理特征，算法均能够较准确地刻画。对于玉米的颗粒重复结构，生成的纹理贴图也较好地保留了原始图像中的外观特征，未出现明显的错乱与遗漏。
-
-\FloatBarrier
 
 为了进一步评价重建资产的外观保真度，本章将所提算法与工业开源软件 MeshLab 进行了定性对比，如图~\ref{fig:meshlab_compare}所示。MeshLab 算法在三角形面片之间存在肉眼可见的纹理断层，而本章算法通过稳定的 UV 参数化与后处理修复策略，生成的纹理贴图在表面连续性和细节还原方面表现更为出色。
 
